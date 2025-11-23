@@ -16,15 +16,13 @@ import {
   mockYieldSources,
   mockTournaments,
   mockLeaderboard,
-  mockWalletState,
-  connectedWalletState,
-  createMockPet,
 } from '@/data/mockData';
+import { useMassaWallet } from '@/hooks/useMassaWallet';
 
 interface ElydrContextType {
   wallet: WalletState;
-  connectWallet: () => void;
-  disconnectWallet: () => void;
+  connectWallet: () => Promise<void>;
+  disconnectWallet: () => Promise<void>;
   currentPet: ElydrPet | null;
   mintPet: () => Promise<string>;
   linkYieldSource: (sourceId: string) => void;
@@ -34,12 +32,13 @@ interface ElydrContextType {
   leaderboard: LeaderboardEntry[];
   isLoading: boolean;
   error: string | null;
+  walletError: string | null;
 }
 
 const ElydrContext = createContext<ElydrContextType | null>(null);
 
 export function ElydrProvider({ children }: { children: React.ReactNode }) {
-  const [wallet, setWallet] = useState<WalletState>(mockWalletState);
+  const massaWallet = useMassaWallet();
   const [currentPet, setCurrentPet] = useState<ElydrPet | null>(null);
   const [yieldSources] = useState<YieldSource[]>(mockYieldSources);
   const [tournaments] = useState<Tournament[]>(mockTournaments);
@@ -47,10 +46,17 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const wallet: WalletState = {
+    isConnected: massaWallet.status === 'connected',
+    address: massaWallet.address,
+    balance: massaWallet.balance,
+    networkId: 'massa-mainnet',
+    networkName: massaWallet.networkName,
+  };
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedPet = localStorage.getItem('elydr-pet');
-      const savedWallet = localStorage.getItem('elydr-wallet');
       if (savedPet) {
         const pet = JSON.parse(savedPet);
         pet.nextCheckAt = new Date(pet.nextCheckAt);
@@ -61,9 +67,6 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
         }));
         setCurrentPet(pet);
       }
-      if (savedWallet) {
-        setWallet(JSON.parse(savedWallet));
-      }
     }
   }, []);
 
@@ -73,28 +76,26 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
     }
   }, [currentPet]);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('elydr-wallet', JSON.stringify(wallet));
-    }
-  }, [wallet]);
-
-  const connectWallet = useCallback(() => {
+  const connectWallet = useCallback(async () => {
     setIsLoading(true);
-    setTimeout(() => {
-      setWallet(connectedWalletState);
-      setIsLoading(false);
-    }, 800);
-  }, []);
+    setError(null);
 
-  const disconnectWallet = useCallback(() => {
-    setWallet(mockWalletState);
+    try {
+      await massaWallet.connect();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to connect wallet');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [massaWallet]);
+
+  const disconnectWallet = useCallback(async () => {
+    await massaWallet.disconnect();
     setCurrentPet(null);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('elydr-pet');
-      localStorage.removeItem('elydr-wallet');
     }
-  }, []);
+  }, [massaWallet]);
 
   const mintPet = useCallback(async (): Promise<string> => {
     if (!wallet.isConnected) {
@@ -232,6 +233,7 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
         leaderboard,
         isLoading,
         error,
+        walletError: massaWallet.error,
       }}
     >
       {children}

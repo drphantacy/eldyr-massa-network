@@ -6,14 +6,29 @@ import { useElydr } from '@/context/ElydrContext';
 
 export function Navbar() {
   const pathname = usePathname();
-  const { wallet, connectWallet, disconnectWallet, isLoading } = useElydr();
-
+  const {
+    wallet,
+    connectWallet,
+    disconnectWallet,
+    isLoading,
+    walletError,
+  } = useElydr();
   const navLinks = [
     { href: '/', label: 'Home' },
     { href: '/mint', label: 'Mint' },
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/battleground', label: 'Battleground' },
   ];
+
+  const handleConnect = async () => {
+    await connectWallet();
+  };
+
+  const truncateAddress = (address: string | null) => {
+    if (!address) return '';
+    if (address.length <= 16) return address;
+    return `${address.slice(0, 8)}...${address.slice(-6)}`;
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-cosmic-950/80 backdrop-blur-md border-b border-cosmic-800/50">
@@ -49,7 +64,7 @@ export function Navbar() {
               <div className="flex items-center gap-3">
                 <div className="hidden sm:flex flex-col items-end">
                   <span className="text-xs text-cosmic-400">{wallet.networkName}</span>
-                  <span className="text-sm text-white font-mono">{wallet.address}</span>
+                  <span className="text-sm text-white font-mono">{truncateAddress(wallet.address)}</span>
                 </div>
                 <button
                   onClick={disconnectWallet}
@@ -59,13 +74,21 @@ export function Navbar() {
                 </button>
               </div>
             ) : (
-              <button
-                onClick={connectWallet}
-                disabled={isLoading}
-                className="px-4 py-2 bg-gradient-to-r from-mythic-purple to-mythic-cyan hover:opacity-90 text-white text-sm font-medium rounded-lg transition-opacity disabled:opacity-50"
-              >
-                {isLoading ? 'Connecting...' : 'Connect Wallet'}
-              </button>
+              <div className="relative">
+                <button
+                  onClick={handleConnect}
+                  disabled={isLoading}
+                  className="px-4 py-2 bg-gradient-to-r from-mythic-purple to-mythic-cyan hover:opacity-90 text-white text-sm font-medium rounded-lg transition-opacity disabled:opacity-50"
+                >
+                  {isLoading ? 'Connecting...' : 'Connect Wallet'}
+                </button>
+
+                {walletError && (
+                  <div className="absolute right-0 mt-2 w-64 bg-red-900/90 border border-red-700 rounded-xl p-3">
+                    <p className="text-red-200 text-xs">{walletError}</p>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 

@@ -107,17 +107,17 @@ export default function MintPage() {
               </div>
               <h2 className="text-2xl font-bold text-white mb-2">Connect Your Wallet</h2>
               <p className="text-cosmic-400 mb-8 max-w-md mx-auto">
-                Connect your Massa wallet to start minting your Elydr. For Stage 1, we&apos;re using a mock wallet connection.
+                Connect your Massa wallet to start minting your Elydr.
               </p>
               <button
                 onClick={handleConnect}
                 disabled={isLoading}
                 className="px-8 py-4 bg-gradient-to-r from-mythic-purple to-mythic-cyan text-white font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
               >
-                {isLoading ? 'Connecting...' : 'Connect Wallet (Mock)'}
+                {isLoading ? 'Connecting...' : 'Connect Wallet'}
               </button>
               <p className="text-cosmic-600 text-sm mt-4">
-                (Real Massa wallet integration in Stage 2)
+                Supports MassaStation, Bearby, and MetaMask Snap
               </p>
             </div>
           )}
@@ -141,7 +141,6 @@ export default function MintPage() {
                 <div>
                   <div className="w-16 h-16 mx-auto mb-4 border-4 border-mythic-purple border-t-transparent rounded-full animate-spin" />
                   <p className="text-cosmic-300">Minting your Elydr...</p>
-                  <p className="text-cosmic-500 text-sm mt-2">(Mock transaction in progress)</p>
                 </div>
               ) : mintingState === 'success' ? (
                 <div>
@@ -158,13 +157,13 @@ export default function MintPage() {
                   disabled={isLoading}
                   className="px-8 py-4 bg-gradient-to-r from-mythic-purple to-mythic-cyan text-white font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 btn-glow"
                 >
-                  Mint Egg (Mock)
+                  Mint Egg
                 </button>
               )}
 
               <div className="mt-8 p-4 bg-cosmic-800/30 rounded-lg">
                 <p className="text-cosmic-500 text-sm">
-                  <span className="text-mythic-gold">Cost:</span> 0.1 MAS (mock) •
+                  <span className="text-mythic-gold">Cost:</span> 0.1 MAS •
                   <span className="text-mythic-cyan ml-2">Gas:</span> ~0.001 MAS
                 </p>
               </div>
@@ -239,12 +238,12 @@ export default function MintPage() {
         </div>
 
         <div className="mt-8 bg-cosmic-900/30 border border-cosmic-700/30 rounded-xl p-6">
-          <h3 className="text-white font-bold mb-2">Stage 1 Notes</h3>
+          <h3 className="text-white font-bold mb-2">How It Works</h3>
           <ul className="text-cosmic-400 text-sm space-y-1">
-            <li>• All blockchain interactions are mocked for this stage</li>
-            <li>• Wallet connection simulates a Massa wallet</li>
-            <li>• Yield sources display mock APY data</li>
-            <li>• Evolution logic runs locally (real autonomous contracts in Stage 4)</li>
+            <li>• Connect your Massa wallet (MassaStation, Bearby, or MetaMask Snap)</li>
+            <li>• Mint an Elydr egg NFT on the Massa blockchain</li>
+            <li>• Link a DeFi yield source to fuel your pet&apos;s evolution</li>
+            <li>• Autonomous smart contracts check yield every 30 minutes</li>
           </ul>
         </div>
       </div>
