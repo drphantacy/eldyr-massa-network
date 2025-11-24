@@ -7,7 +7,7 @@ export type WalletStatus = 'disconnected' | 'connecting' | 'connected' | 'no-wal
 
 interface MassaAccount {
   address: string;
-  balance: () => Promise<{ balance: string }>;
+  balance: (final?: boolean) => Promise<bigint | { balance: string } | string>;
 }
 
 export interface MassaWalletState {
@@ -98,9 +98,19 @@ export function useMassaWallet(): UseMassaWalletReturn {
       let balance = '0';
       try {
         const balanceInfo = await account.balance();
-        const masBalance = BigInt(balanceInfo.balance) / BigInt(1e9);
-        balance = `${masBalance.toString()} MAS`;
-      } catch {
+        // Handle different balance formats from different wallets
+        let rawBalance: bigint;
+        if (typeof balanceInfo === 'bigint') {
+          rawBalance = balanceInfo;
+        } else if (typeof balanceInfo === 'object' && balanceInfo.balance) {
+          rawBalance = BigInt(balanceInfo.balance);
+        } else {
+          rawBalance = BigInt(String(balanceInfo));
+        }
+        const masBalance = Math.floor(Number(rawBalance) / 1e7) / 100;
+        balance = `${masBalance.toFixed(2)} MAS`;
+      } catch (e) {
+        console.error('Balance fetch error:', e);
         balance = '-- MAS';
       }
 
@@ -122,27 +132,39 @@ export function useMassaWallet(): UseMassaWalletReturn {
         error: null,
       });
 
-      if (wallet.listenAccountChanges) {
-        wallet.listenAccountChanges(async (newAddress: string) => {
-          const accounts = await wallet.accounts();
-          const newAccount = accounts.find(a => (a as unknown as MassaAccount).address === newAddress) as unknown as MassaAccount;
-          if (newAccount) {
-            let newBalance = '0';
-            try {
-              const balanceInfo = await newAccount.balance();
-              const masBalance = BigInt(balanceInfo.balance) / BigInt(1e9);
-              newBalance = `${masBalance.toString()} MAS`;
-            } catch {
-              newBalance = '-- MAS';
+      try {
+        if (wallet.listenAccountChanges) {
+          wallet.listenAccountChanges(async (newAddress: string) => {
+            const accounts = await wallet.accounts();
+            const newAccount = accounts.find(a => (a as unknown as MassaAccount).address === newAddress) as unknown as MassaAccount;
+            if (newAccount) {
+              let newBalance = '0';
+              try {
+                const balanceInfo = await newAccount.balance();
+                let rawBalance: bigint;
+                if (typeof balanceInfo === 'bigint') {
+                  rawBalance = balanceInfo;
+                } else if (typeof balanceInfo === 'object' && balanceInfo.balance) {
+                  rawBalance = BigInt(balanceInfo.balance);
+                } else {
+                  rawBalance = BigInt(String(balanceInfo));
+                }
+                const masBalance = Math.floor(Number(rawBalance) / 1e7) / 100;
+                newBalance = `${masBalance.toFixed(2)} MAS`;
+              } catch {
+                newBalance = '-- MAS';
+              }
+              setState(prev => ({
+                ...prev,
+                account: newAccount,
+                address: newAddress,
+                balance: newBalance,
+              }));
             }
-            setState(prev => ({
-              ...prev,
-              account: newAccount,
-              address: newAddress,
-              balance: newBalance,
-            }));
-          }
-        });
+          });
+        }
+      } catch {
+        // Some wallets don't support account change listening
       }
 
     } catch (err) {
@@ -172,10 +194,18 @@ export function useMassaWallet(): UseMassaWalletReturn {
 
     try {
       const balanceInfo = await state.account.balance();
-      const masBalance = BigInt(balanceInfo.balance) / BigInt(1e9);
+      let rawBalance: bigint;
+      if (typeof balanceInfo === 'bigint') {
+        rawBalance = balanceInfo;
+      } else if (typeof balanceInfo === 'object' && balanceInfo.balance) {
+        rawBalance = BigInt(balanceInfo.balance);
+      } else {
+        rawBalance = BigInt(String(balanceInfo));
+      }
+      const masBalance = Math.floor(Number(rawBalance) / 1e7) / 100;
       setState(prev => ({
         ...prev,
-        balance: `${masBalance.toString()} MAS`,
+        balance: `${masBalance.toFixed(2)} MAS`,
       }));
     } catch (err) {
       console.error('Error refreshing balance:', err);
