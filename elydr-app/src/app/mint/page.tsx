@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useElydr } from '@/context/ElydrContext';
-import { CountdownTimer, YieldSourceCard, PetCard } from '@/components';
+import { CountdownTimer, YieldSourceCard, PetCard, StepIndicator } from '@/components';
 
 type MintStep = 'connect' | 'mint' | 'link' | 'complete';
 
@@ -66,35 +66,8 @@ export default function MintPage() {
           </p>
         </div>
 
-        <div className="flex items-center justify-center gap-2 mb-12">
-          {['connect', 'mint', 'link', 'complete'].map((s, i) => {
-            const stepIndex = ['connect', 'mint', 'link', 'complete'].indexOf(step);
-            const isActive = s === step;
-            const isComplete = i < stepIndex;
-
-            return (
-              <div key={s} className="flex items-center">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all ${
-                    isComplete
-                      ? 'bg-green-500 text-white'
-                      : isActive
-                      ? 'bg-mythic-purple text-white ring-4 ring-mythic-purple/30'
-                      : 'bg-cosmic-800 text-cosmic-500'
-                  }`}
-                >
-                  {isComplete ? '✓' : i + 1}
-                </div>
-                {i < 3 && (
-                  <div
-                    className={`w-12 md:w-20 h-1 ${
-                      isComplete ? 'bg-green-500' : 'bg-cosmic-800'
-                    }`}
-                  />
-                )}
-              </div>
-            );
-          })}
+        <div className="mb-12">
+          <StepIndicator steps={['connect', 'mint', 'link', 'complete']} currentStep={step} />
         </div>
 
         <div className="bg-cosmic-900/50 border border-cosmic-700/50 rounded-2xl p-8 backdrop-blur-sm">

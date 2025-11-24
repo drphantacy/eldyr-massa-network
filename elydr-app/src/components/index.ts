@@ -6,3 +6,4 @@ export { LeaderboardTable } from './LeaderboardTable';
 export { CountdownTimer } from './CountdownTimer';
 export { YieldSourceCard } from './YieldSourceCard';
 export { EvolutionLog } from './EvolutionLog';
+export { StepIndicator } from './StepIndicator';
