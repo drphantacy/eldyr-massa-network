@@ -12,6 +12,7 @@ export default function MintPage() {
   const {
     wallet,
     connectWallet,
+    pets,
     currentPet,
     mintPet,
     linkYieldSource,
@@ -24,18 +25,19 @@ export default function MintPage() {
   const [step, setStep] = useState<MintStep>('connect');
   const [selectedYieldSource, setSelectedYieldSource] = useState<string | null>(null);
   const [mintingState, setMintingState] = useState<'idle' | 'minting' | 'success'>('idle');
+  const [mintingNewEgg, setMintingNewEgg] = useState(false);
 
   useEffect(() => {
     if (!wallet.isConnected) {
       setStep('connect');
-    } else if (!currentPet) {
+    } else if (mintingNewEgg || !currentPet) {
       setStep('mint');
     } else if (!currentPet.linkedYieldSourceId) {
       setStep('link');
     } else {
       setStep('complete');
     }
-  }, [wallet.isConnected, currentPet]);
+  }, [wallet.isConnected, currentPet, mintingNewEgg]);
 
   const handleConnect = () => {
     connectWallet();
@@ -47,11 +49,17 @@ export default function MintPage() {
     try {
       await mintPet();
       setMintingState('success');
+      setMintingNewEgg(false);
       setStep('link');
     } catch (error) {
       console.error('Mint error:', error);
       setMintingState('idle');
     }
+  };
+
+  const handleMintAnother = () => {
+    setMintingNewEgg(true);
+    setMintingState('idle');
   };
 
   const handleLinkYield = () => {
@@ -209,12 +217,26 @@ export default function MintPage() {
                 <CountdownTimer targetDate={currentPet.nextCheckAt} label="Next evolution check" />
               </div>
 
-              <button
-                onClick={handleContinue}
-                className="px-8 py-4 bg-gradient-to-r from-mythic-purple to-mythic-cyan text-white font-bold rounded-xl hover:opacity-90 transition-opacity btn-glow"
-              >
-                Continue to Dashboard
-              </button>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={handleContinue}
+                  className="px-8 py-4 bg-gradient-to-r from-mythic-purple to-mythic-cyan text-white font-bold rounded-xl hover:opacity-90 transition-opacity btn-glow"
+                >
+                  Continue to Dashboard
+                </button>
+                <button
+                  onClick={handleMintAnother}
+                  className="px-8 py-4 bg-cosmic-800 border border-cosmic-600 text-white font-bold rounded-xl hover:bg-cosmic-700 transition-colors"
+                >
+                  Mint Another Egg
+                </button>
+              </div>
+
+              {pets.length > 1 && (
+                <p className="text-cosmic-400 text-sm mt-4">
+                  You have {pets.length} Elydrs in your collection
+                </p>
+              )}
             </div>
           )}
         </div>
