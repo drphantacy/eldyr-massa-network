@@ -2,6 +2,8 @@ import {
   Storage,
   Context,
   generateEvent,
+  transferCoins,
+  Address,
 } from "@massalabs/massa-as-sdk";
 import {
   Args,
@@ -36,6 +38,7 @@ export class ElydrPet {
   agility: u8;
   lastCheckTime: u64;
   checkCount: u64;
+  stakedAmount: u64;
 
   constructor() {
     this.id = 0;
@@ -52,6 +55,7 @@ export class ElydrPet {
     this.agility = 5;
     this.lastCheckTime = 0;
     this.checkCount = 0;
+    this.stakedAmount = 0;
   }
 
   serialize(): StaticArray<u8> {
@@ -70,6 +74,7 @@ export class ElydrPet {
       .add(this.agility)
       .add(this.lastCheckTime)
       .add(this.checkCount)
+      .add(this.stakedAmount)
       .serialize();
   }
 
@@ -90,6 +95,7 @@ export class ElydrPet {
     pet.agility = args.nextU8().expect("Failed to deserialize agility");
     pet.lastCheckTime = args.nextU64().expect("Failed to deserialize lastCheckTime");
     pet.checkCount = args.nextU64().expect("Failed to deserialize checkCount");
+    pet.stakedAmount = args.nextU64().expect("Failed to deserialize stakedAmount");
     return pet;
   }
 }
@@ -277,4 +283,77 @@ export function transfer(args: StaticArray<u8>): void {
   Storage.set(getOwnerOfKey(petId), stringToBytes(toAddress));
 
   generateEvent("Pet #" + petId.toString() + " transferred from " + caller + " to " + toAddress);
+}
+
+export function stake(args: StaticArray<u8>): void {
+  const parsedArgs = new Args(args);
+  const petId = parsedArgs.nextU64().expect("Failed to parse petId");
+
+  const caller = Context.caller().toString();
+  const transferredCoins = Context.transferredCoins();
+
+  assert(transferredCoins > 0, "Must send MAS to stake");
+
+  const petKey = getPetKey(petId);
+  assert(Storage.has(petKey), "Pet does not exist");
+
+  const pet = ElydrPet.deserialize(Storage.get(petKey));
+  assert(pet.owner == caller, "Not the owner of this pet");
+
+  pet.stakedAmount += transferredCoins;
+  Storage.set(petKey, pet.serialize());
+
+  generateEvent("Staked " + (transferredCoins / 100_000_000).toString() + " MAS to Pet #" + petId.toString());
+}
+
+export function unstake(args: StaticArray<u8>): void {
+  const parsedArgs = new Args(args);
+  const petId = parsedArgs.nextU64().expect("Failed to parse petId");
+  const percentage = parsedArgs.nextU8().expect("Failed to parse percentage");
+
+  assert(percentage > 0 && percentage <= 100, "Percentage must be between 1 and 100");
+
+  const caller = Context.caller().toString();
+  const petKey = getPetKey(petId);
+
+  assert(Storage.has(petKey), "Pet does not exist");
+
+  const pet = ElydrPet.deserialize(Storage.get(petKey));
+  assert(pet.owner == caller, "Not the owner of this pet");
+  assert(pet.stakedAmount > 0, "No MAS to unstake");
+
+  const unstakeAmount = (pet.stakedAmount * percentage) / 100;
+  pet.stakedAmount -= unstakeAmount;
+
+  Storage.set(petKey, pet.serialize());
+  transferCoins(new Address(caller), unstakeAmount);
+
+  generateEvent("Unstaked " + (unstakeAmount / 100_000_000).toString() + " MAS from Pet #" + petId.toString());
+}
+
+export function release(args: StaticArray<u8>): void {
+  const parsedArgs = new Args(args);
+  const petId = parsedArgs.nextU64().expect("Failed to parse petId");
+
+  const caller = Context.caller().toString();
+  const petKey = getPetKey(petId);
+
+  assert(Storage.has(petKey), "Pet does not exist");
+
+  const pet = ElydrPet.deserialize(Storage.get(petKey));
+  assert(pet.owner == caller, "Not the owner of this pet");
+
+  const stakedAmount = pet.stakedAmount;
+
+  const currentBalance = bytesToU64(Storage.get(getBalanceOfKey(caller)));
+  Storage.set(getBalanceOfKey(caller), u64ToBytes(currentBalance - 1));
+
+  Storage.del(petKey);
+  Storage.del(getOwnerOfKey(petId));
+
+  if (stakedAmount > 0) {
+    transferCoins(new Address(caller), stakedAmount);
+  }
+
+  generateEvent("Pet #" + petId.toString() + " released, returning " + (stakedAmount / 100_000_000).toString() + " MAS to owner");
 }

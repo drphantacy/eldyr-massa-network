@@ -3,17 +3,110 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useElydr } from '@/context/ElydrContext';
-import { PetCard, CountdownTimer, EvolutionLog, YieldSourceCard } from '@/components';
+import { PetCard, CountdownTimer, EvolutionLog, YieldSourceCard, Modal } from '@/components';
 
 type TabType = 'summary' | 'details';
 
+type ModalState = {
+  isOpen: boolean;
+  type: 'info' | 'warning' | 'success' | 'error';
+  title: string;
+  message: string;
+  confirmText?: string;
+  onConfirm?: () => void;
+  showCancel?: boolean;
+};
+
 export default function DashboardPage() {
-  const { wallet, pets, currentPet, selectedPetId, selectPet, yieldSources, simulateEvolution } = useElydr();
+  const { wallet, pets, currentPet, selectedPetId, selectPet, yieldSources, simulateEvolution, stakeToPet, unstakeFromPet, releasePet, refreshPetsFromChain, error, isLoading } = useElydr();
   const [activeTab, setActiveTab] = useState<TabType>('summary');
+  const [stakeAmount, setStakeAmount] = useState('');
+  const [unstakePercentage, setUnstakePercentage] = useState(100);
+  const [modalState, setModalState] = useState<ModalState>({
+    isOpen: false,
+    type: 'info',
+    title: '',
+    message: '',
+  });
 
   const linkedYieldSource = yieldSources.find(
     (s) => s.id === currentPet?.linkedYieldSourceId
   );
+
+  const closeModal = () => {
+    setModalState(prev => ({ ...prev, isOpen: false }));
+  };
+
+  const handleStake = async () => {
+    if (!stakeAmount || parseFloat(stakeAmount) <= 0) {
+      setModalState({
+        isOpen: true,
+        type: 'warning',
+        title: 'Invalid Amount',
+        message: 'Please enter a valid amount to stake',
+      });
+      return;
+    }
+    try {
+      await stakeToPet(stakeAmount);
+      setStakeAmount('');
+      setModalState({
+        isOpen: true,
+        type: 'success',
+        title: 'Stake Successful!',
+        message: `Successfully staked ${stakeAmount} MAS to your Elydr.`,
+      });
+    } catch (err) {
+      console.error('Stake failed:', err);
+    }
+  };
+
+  const handleUnstake = async () => {
+    if (unstakePercentage <= 0) {
+      setModalState({
+        isOpen: true,
+        type: 'warning',
+        title: 'Invalid Percentage',
+        message: 'Please enter a valid percentage to unstake',
+      });
+      return;
+    }
+    try {
+      await unstakeFromPet(unstakePercentage);
+      setModalState({
+        isOpen: true,
+        type: 'success',
+        title: 'Unstake Successful!',
+        message: `Successfully unstaked ${unstakePercentage}% from your Elydr.`,
+      });
+    } catch (err) {
+      console.error('Unstake failed:', err);
+    }
+  };
+
+  const handleRelease = () => {
+    setModalState({
+      isOpen: true,
+      type: 'warning',
+      title: 'Release Pet?',
+      message: 'Are you sure you want to release this pet? This action cannot be undone. All staked MAS will be returned to you.',
+      confirmText: 'Release',
+      showCancel: true,
+      onConfirm: async () => {
+        try {
+          await releasePet();
+          setModalState({
+            isOpen: true,
+            type: 'success',
+            title: 'Pet Released',
+            message: 'Your Elydr has been released and all staked MAS has been returned.',
+          });
+        } catch (err) {
+          console.error('Release failed:', err);
+        }
+      },
+    });
+  };
 
   if (!wallet.isConnected || !currentPet) {
     return (
@@ -54,6 +147,30 @@ export default function DashboardPage() {
             <CountdownTimer targetDate={currentPet.nextCheckAt} label="Next autonomous check" />
           </div>
         </div>
+
+        {error && (
+          <div className="mb-6 bg-red-900/50 border border-red-700 rounded-xl p-4 backdrop-blur-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-red-300 text-sm">⚠️ {error}</span>
+              {error.includes('does not exist') && (
+                <button
+                  onClick={refreshPetsFromChain}
+                  className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white text-sm rounded-lg transition-colors"
+                >
+                  Reload from Blockchain
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="mb-6 bg-mythic-purple/20 border border-mythic-purple rounded-xl p-4 backdrop-blur-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-mythic-cyan text-sm">⏳ Processing transaction... Please approve in your wallet.</span>
+            </div>
+          </div>
+        )}
 
         {pets.length > 1 && (
           <div className="mb-6">
@@ -99,6 +216,58 @@ export default function DashboardPage() {
             <PetCard pet={currentPet} yieldSource={linkedYieldSource} size="lg" />
 
             <div className="bg-cosmic-900/50 border border-cosmic-700/50 rounded-xl p-4 backdrop-blur-sm">
+              <h3 className="text-white font-bold mb-4">Staking</h3>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-cosmic-400">Staked Amount</span>
+                    <span className="text-mythic-cyan font-bold">{((currentPet.stakedAmount || 0) / 100_000_000).toFixed(2)} MAS</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      value={stakeAmount}
+                      onChange={(e) => setStakeAmount(e.target.value)}
+                      placeholder="Amount to stake"
+                      className="flex-1 px-3 py-2 bg-cosmic-800 border border-cosmic-600 rounded-lg text-white placeholder-cosmic-500 focus:outline-none focus:border-mythic-purple"
+                      step="0.1"
+                      min="0"
+                    />
+                    <button
+                      onClick={handleStake}
+                      disabled={!stakeAmount || parseFloat(stakeAmount) <= 0}
+                      className="px-4 py-2 bg-gradient-to-r from-mythic-purple to-mythic-cyan text-white font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Stake
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-cosmic-400">Unstake</span>
+                    <span className="text-white font-bold">{unstakePercentage}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="100"
+                    value={unstakePercentage}
+                    onChange={(e) => setUnstakePercentage(parseInt(e.target.value))}
+                    className="w-full"
+                  />
+                  <button
+                    onClick={handleUnstake}
+                    disabled={!currentPet.stakedAmount || currentPet.stakedAmount === 0}
+                    className="w-full mt-2 py-2 bg-cosmic-800 border border-cosmic-600 text-white font-medium rounded-lg hover:bg-cosmic-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Unstake {((currentPet.stakedAmount || 0) * unstakePercentage / 100 / 100_000_000).toFixed(2)} MAS
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-cosmic-900/50 border border-cosmic-700/50 rounded-xl p-4 backdrop-blur-sm">
               <h3 className="text-white font-bold mb-4">Actions</h3>
               <div className="space-y-3">
                 <button
@@ -113,6 +282,12 @@ export default function DashboardPage() {
                 >
                   Enter Battleground
                 </Link>
+                <button
+                  onClick={handleRelease}
+                  className="w-full py-3 bg-red-900/50 border border-red-700 text-red-300 font-medium rounded-lg hover:bg-red-900 transition-colors"
+                >
+                  Release Pet
+                </button>
               </div>
             </div>
 
@@ -254,6 +429,17 @@ export default function DashboardPage() {
         </div>
 
       </div>
+
+      <Modal
+        isOpen={modalState.isOpen}
+        onClose={closeModal}
+        onConfirm={modalState.onConfirm}
+        title={modalState.title}
+        message={modalState.message}
+        type={modalState.type}
+        confirmText={modalState.confirmText}
+        showCancel={modalState.showCancel}
+      />
     </div>
   );
 }

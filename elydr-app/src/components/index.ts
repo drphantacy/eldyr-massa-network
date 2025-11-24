@@ -7,3 +7,4 @@ export { CountdownTimer } from './CountdownTimer';
 export { YieldSourceCard } from './YieldSourceCard';
 export { EvolutionLog } from './EvolutionLog';
 export { StepIndicator } from './StepIndicator';
+export { Modal } from './Modal';

@@ -8,6 +8,9 @@ export {
   linkYieldSource,
   updatePet,
   transfer,
+  stake,
+  unstake,
+  release,
 } from "./elydrNFT";
 
 export {

@@ -29,6 +29,7 @@ export interface ElydrPet {
   power: number;
   defense: number;
   agility: number;
+  stakedAmount?: number;
 }
 
 export interface YieldSource {
