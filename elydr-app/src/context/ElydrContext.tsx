@@ -11,7 +11,10 @@ interface ElydrContextType {
   wallet: WalletState;
   connectWallet: () => Promise<void>;
   disconnectWallet: () => Promise<void>;
+  pets: ElydrPet[];
   currentPet: ElydrPet | null;
+  selectedPetId: string | null;
+  selectPet: (petId: string) => void;
   mintPet: () => Promise<string>;
   linkYieldSource: (sourceId: string) => void;
   simulateEvolution: () => void;
@@ -27,10 +30,10 @@ interface ElydrContextType {
 
 const ElydrContext = createContext<ElydrContextType | null>(null);
 
-const STORAGE_KEY = 'elydr-pet';
+const STORAGE_KEY = 'elydr-pets';
+const SELECTED_PET_KEY = 'elydr-selected-pet';
 
-function deserializePet(data: string): ElydrPet {
-  const pet = JSON.parse(data);
+function deserializePet(pet: any): ElydrPet {
   return {
     ...pet,
     nextCheckAt: new Date(pet.nextCheckAt),
@@ -42,11 +45,22 @@ function deserializePet(data: string): ElydrPet {
   };
 }
 
+function deserializePets(data: string): ElydrPet[] {
+  const pets = JSON.parse(data);
+  return pets.map(deserializePet);
+}
+
 export function ElydrProvider({ children }: { children: React.ReactNode }) {
   const massaWallet = useMassaWallet();
-  const [currentPet, setCurrentPet] = useState<ElydrPet | null>(null);
+  const [pets, setPets] = useState<ElydrPet[]>([]);
+  const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const currentPet = useMemo(() => {
+    if (!selectedPetId) return pets[0] || null;
+    return pets.find(p => p.id === selectedPetId) || pets[0] || null;
+  }, [pets, selectedPetId]);
 
   const wallet = useMemo<WalletState>(
     () => ({
@@ -59,24 +73,38 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
     [massaWallet.status, massaWallet.address, massaWallet.balance, massaWallet.networkName]
   );
 
+  // Load pets from localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
+    const savedPets = localStorage.getItem(STORAGE_KEY);
+    const savedSelectedId = localStorage.getItem(SELECTED_PET_KEY);
+    if (savedPets) {
       try {
-        setCurrentPet(deserializePet(saved));
+        setPets(deserializePets(savedPets));
       } catch (e) {
-        console.error('Failed to load pet:', e);
+        console.error('Failed to load pets:', e);
       }
+    }
+    if (savedSelectedId) {
+      setSelectedPetId(savedSelectedId);
     }
   }, []);
 
+  // Save pets to localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (currentPet) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(currentPet));
+    if (pets.length > 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(pets));
     }
-  }, [currentPet]);
+  }, [pets]);
+
+  // Save selected pet id
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (selectedPetId) {
+      localStorage.setItem(SELECTED_PET_KEY, selectedPetId);
+    }
+  }, [selectedPetId]);
 
   const connectWallet = useCallback(async () => {
     setIsLoading(true);
@@ -92,11 +120,17 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
 
   const disconnectWallet = useCallback(async () => {
     await massaWallet.disconnect();
-    setCurrentPet(null);
+    setPets([]);
+    setSelectedPetId(null);
     if (typeof window !== 'undefined') {
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(SELECTED_PET_KEY);
     }
   }, [massaWallet]);
+
+  const selectPet = useCallback((petId: string) => {
+    setSelectedPetId(petId);
+  }, []);
 
   const mintPet = useCallback(async (): Promise<string> => {
     if (!wallet.isConnected) {
@@ -108,7 +142,9 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const result = await mintPetOnChain(massaWallet.account);
-      setCurrentPet(createNewPet(result.petId));
+      const newPet = createNewPet(result.petId);
+      setPets(prev => [...prev, newPet]);
+      setSelectedPetId(result.petId);
       return result.petId;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Minting failed');
@@ -119,33 +155,36 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
   }, [wallet.isConnected, massaWallet.account]);
 
   const linkYieldSource = useCallback((sourceId: string) => {
-    setCurrentPet((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        linkedYieldSourceId: sourceId,
-        nextCheckAt: new Date(Date.now() + 1800000),
-      };
-    });
-  }, []);
+    if (!currentPet) return;
+    setPets(prev => prev.map(pet =>
+      pet.id === currentPet.id
+        ? { ...pet, linkedYieldSourceId: sourceId, nextCheckAt: new Date(Date.now() + 1800000) }
+        : pet
+    ));
+  }, [currentPet]);
 
   const simulateEvolution = useCallback(() => {
-    setCurrentPet((prev) => {
-      if (!prev?.linkedYieldSourceId) return prev;
+    if (!currentPet?.linkedYieldSourceId) return;
 
-      const yieldSource = mockYieldSources.find((s) => s.id === prev.linkedYieldSourceId);
-      if (!yieldSource) return prev;
+    const yieldSource = mockYieldSources.find((s) => s.id === currentPet.linkedYieldSourceId);
+    if (!yieldSource) return;
 
-      return processEvolution(prev, yieldSource);
-    });
-  }, []);
+    setPets(prev => prev.map(pet =>
+      pet.id === currentPet.id
+        ? processEvolution(pet, yieldSource)
+        : pet
+    ));
+  }, [currentPet]);
 
   const contextValue = useMemo<ElydrContextType>(
     () => ({
       wallet,
       connectWallet,
       disconnectWallet,
+      pets,
       currentPet,
+      selectedPetId,
+      selectPet,
       mintPet,
       linkYieldSource,
       simulateEvolution,
@@ -162,7 +201,10 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
       wallet,
       connectWallet,
       disconnectWallet,
+      pets,
       currentPet,
+      selectedPetId,
+      selectPet,
       mintPet,
       linkYieldSource,
       simulateEvolution,
