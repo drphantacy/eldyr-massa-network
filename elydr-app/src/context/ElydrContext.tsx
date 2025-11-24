@@ -4,7 +4,8 @@ import React, { createContext, useContext, useState, useCallback, useEffect, use
 import { ElydrPet, YieldSource, Tournament, LeaderboardEntry, WalletState, EvolutionEvent } from '@/types';
 import { mockYieldSources, mockTournaments, mockLeaderboard } from '@/data/mockData';
 import { useMassaWallet } from '@/hooks/useMassaWallet';
-import { processEvolution, createNewPet, generatePetId } from '@/utils/evolution';
+import { processEvolution, createNewPet } from '@/utils/evolution';
+import { mintPetOnChain, CONTRACT_ADDRESS, NETWORK } from '@/lib/contract';
 
 interface ElydrContextType {
   wallet: WalletState;
@@ -20,6 +21,8 @@ interface ElydrContextType {
   isLoading: boolean;
   error: string | null;
   walletError: string | null;
+  contractAddress: string;
+  network: string;
 }
 
 const ElydrContext = createContext<ElydrContextType | null>(null);
@@ -103,15 +106,17 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     setError(null);
 
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const petId = generatePetId();
-        setCurrentPet(createNewPet(petId));
-        setIsLoading(false);
-        resolve(petId);
-      }, 1500);
-    });
-  }, [wallet.isConnected]);
+    try {
+      const result = await mintPetOnChain(massaWallet.account);
+      setCurrentPet(createNewPet(result.petId));
+      return result.petId;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Minting failed');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [wallet.isConnected, massaWallet.account]);
 
   const linkYieldSource = useCallback((sourceId: string) => {
     setCurrentPet((prev) => {
@@ -150,6 +155,8 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       error,
       walletError: massaWallet.error,
+      contractAddress: CONTRACT_ADDRESS,
+      network: NETWORK,
     }),
     [
       wallet,

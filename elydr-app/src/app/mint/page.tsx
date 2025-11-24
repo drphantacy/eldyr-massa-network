@@ -17,6 +17,8 @@ export default function MintPage() {
     linkYieldSource,
     yieldSources,
     isLoading,
+    contractAddress,
+    network,
   } = useElydr();
 
   const [step, setStep] = useState<MintStep>(() => {
@@ -218,6 +220,23 @@ export default function MintPage() {
             <li>• Link a DeFi yield source to fuel your pet&apos;s evolution</li>
             <li>• Autonomous smart contracts check yield every 30 minutes</li>
           </ul>
+
+          <div className="mt-4 pt-4 border-t border-cosmic-700/30">
+            <p className="text-cosmic-500 text-xs">
+              <span className="text-cosmic-400">Network:</span> {network}
+            </p>
+            <p className="text-cosmic-500 text-xs mt-1">
+              <span className="text-cosmic-400">Contract:</span>{' '}
+              <a
+                href={`https://buildnet.massa.net/address/${contractAddress}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-mythic-cyan hover:underline font-mono"
+              >
+                {contractAddress.slice(0, 12)}...{contractAddress.slice(-8)}
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     </div>
