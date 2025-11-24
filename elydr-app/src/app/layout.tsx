@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   description:
     'Mint, grow, and battle mythical pets powered by DeFi yield and Massa autonomous smart contracts.',
   keywords: ['Massa', 'NFT', 'DeFi', 'Autonomous', 'Web3', 'Blockchain', 'Pets'],
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({
