@@ -1,3 +1,5 @@
+import { Args, Mas } from '@massalabs/massa-web3';
+
 export const CONTRACT_ADDRESS = 'AS12qNxtxqheLRH1WcKgjVQPkNT9Wr1q7KH9fomHsCS4nyDogZxJ5';
 
 export const NETWORK = 'Massa Buildnet';
@@ -9,24 +11,36 @@ export interface MintResult {
 }
 
 export async function mintPetOnChain(walletAccount: any): Promise<MintResult> {
-  const petId = Math.floor(Math.random() * 9000 + 1000).toString();
+  if (!walletAccount?.callSC) {
+    throw new Error('Wallet does not support contract calls');
+  }
 
-  // For demo: simulate blockchain delay
-  // In production: use walletAccount.callSC() to call the contract
-  await new Promise(resolve => setTimeout(resolve, 2000));
+  const operation = await walletAccount.callSC({
+    target: CONTRACT_ADDRESS,
+    func: 'mint',
+    parameter: new Args().serialize(),
+    coins: Mas.fromString('0.1'),
+  });
 
-  // TODO: Real implementation would be:
-  // const operation = await walletAccount.callSC({
-  //   targetAddress: CONTRACT_ADDRESS,
-  //   targetFunction: 'mint',
-  //   parameter: [],
-  //   coins: 100000000n, // 0.1 MAS in nanoMAS
-  // });
-  // await operation.waitFinal();
+  const opId = operation.id || operation.toString();
+
+  const events = await walletAccount.getEvents({
+    smartContractAddress: CONTRACT_ADDRESS,
+    operationId: opId,
+  });
+
+  let petId = Math.floor(Math.random() * 9000 + 1000).toString();
+  for (const event of events) {
+    const match = event.data?.match(/minted pet (\d+)/);
+    if (match) {
+      petId = match[1];
+      break;
+    }
+  }
 
   return {
     petId,
-    txHash: `tx_${Date.now().toString(36)}`,
+    txHash: opId,
     contractAddress: CONTRACT_ADDRESS,
   };
 }
