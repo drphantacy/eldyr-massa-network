@@ -25,10 +25,10 @@ const stageEmoji: Record<ElydrStage, string> = {
   elder: '⚡',
 };
 
-const pathBadge: Record<string, { label: string; color: string }> = {
-  mythic: { label: 'Mythic', color: 'bg-mythic-purple text-white' },
-  common: { label: 'Common', color: 'bg-cosmic-600 text-white' },
-  undetermined: { label: '???', color: 'bg-cosmic-700 text-cosmic-300' },
+const pathBadge: Record<string, { label: string; className: string }> = {
+  mythic: { label: 'Mythic', className: 'badge-mythic' },
+  common: { label: 'Common', className: 'badge-common' },
+  undetermined: { label: '???', className: 'badge-undetermined' },
 };
 
 export function PetCard({ pet, yieldSource, showStats = true, size = 'md' }: PetCardProps) {
@@ -45,7 +45,7 @@ export function PetCard({ pet, yieldSource, showStats = true, size = 'md' }: Pet
   };
 
   return (
-    <div className="bg-cosmic-900/50 border border-cosmic-700/50 rounded-xl p-4 backdrop-blur-sm">
+    <div className="card-padded">
       <div className="flex justify-center mb-4">
         <div
           className={`${sizeClasses[size]} bg-gradient-to-br ${stageColors[pet.stage]} rounded-xl flex items-center justify-center relative overflow-hidden animate-float`}
@@ -61,10 +61,10 @@ export function PetCard({ pet, yieldSource, showStats = true, size = 'md' }: Pet
       <div className="text-center mb-4">
         <h3 className="text-white font-bold text-lg">{pet.name}</h3>
         <div className="flex items-center justify-center gap-2 mt-1">
-          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${pathBadge[pet.path].color}`}>
+          <span className={pathBadge[pet.path].className}>
             {pathBadge[pet.path].label}
           </span>
-          <span className="text-cosmic-400 text-xs capitalize">
+          <span className="text-muted text-xs capitalize">
             {pet.stage}
           </span>
         </div>
@@ -73,44 +73,42 @@ export function PetCard({ pet, yieldSource, showStats = true, size = 'md' }: Pet
       {showStats && (
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <span className={`text-cosmic-400 ${textSizeClasses[size]}`}>Level</span>
+            <span className={`text-muted ${textSizeClasses[size]}`}>Level</span>
             <span className="text-white font-mono">{pet.level}</span>
           </div>
 
           <div>
             <div className="flex justify-between items-center mb-1">
-              <span className={`text-cosmic-400 ${textSizeClasses[size]}`}>Growth</span>
-              <span className="text-cosmic-300 text-xs">
-                {pet.totalGrowthPoints} pts
-              </span>
+              <span className={`text-muted ${textSizeClasses[size]}`}>Growth</span>
+              <span className="text-cosmic-300 text-xs">{pet.totalGrowthPoints} pts</span>
             </div>
-            <div className="h-2 bg-cosmic-800 rounded-full overflow-hidden">
+            <div className="progress-bar">
               <div
-                className={`h-full bg-gradient-to-r ${stageColors[pet.stage]} transition-all duration-500`}
+                className={`progress-fill bg-gradient-to-r ${stageColors[pet.stage]}`}
                 style={{ width: `${Math.min((pet.growthPoints / 20) * 100, 100)}%` }}
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-cosmic-700/50">
+          <div className="grid grid-cols-3 gap-2 pt-2 section-divider">
             <div className="text-center">
-              <div className="text-mythic-flame font-bold">{pet.power}</div>
-              <div className="text-cosmic-500 text-xs">PWR</div>
+              <div className="stat-value text-mythic-flame">{pet.power}</div>
+              <div className="stat-label">PWR</div>
             </div>
             <div className="text-center">
-              <div className="text-mythic-cyan font-bold">{pet.defense}</div>
-              <div className="text-cosmic-500 text-xs">DEF</div>
+              <div className="stat-value text-mythic-cyan">{pet.defense}</div>
+              <div className="stat-label">DEF</div>
             </div>
             <div className="text-center">
-              <div className="text-mythic-gold font-bold">{pet.agility}</div>
-              <div className="text-cosmic-500 text-xs">AGI</div>
+              <div className="stat-value text-mythic-gold">{pet.agility}</div>
+              <div className="stat-label">AGI</div>
             </div>
           </div>
 
           {yieldSource && (
-            <div className="pt-2 border-t border-cosmic-700/50">
+            <div className="pt-2 section-divider">
               <div className="flex justify-between items-center">
-                <span className="text-cosmic-400 text-xs">Yield Source</span>
+                <span className="text-muted text-xs">Yield Source</span>
                 <span className="text-mythic-cyan text-xs font-medium">
                   {yieldSource.apy.toFixed(1)}% APY
                 </span>

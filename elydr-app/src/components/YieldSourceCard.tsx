@@ -19,46 +19,34 @@ export function YieldSourceCard({ source, isSelected, onSelect }: YieldSourceCar
 
   return (
     <div
-      className={`bg-cosmic-900/50 border rounded-xl p-4 backdrop-blur-sm cursor-pointer transition-all ${
-        isSelected
-          ? 'border-mythic-purple ring-2 ring-mythic-purple/30'
-          : 'border-cosmic-700/50 hover:border-cosmic-600'
-      }`}
+      className={`card-selectable ${isSelected ? 'card-selected' : ''}`}
       onClick={() => onSelect?.(source.id)}
     >
       <div className="flex items-start justify-between mb-3">
         <div>
           <h4 className="text-white font-bold">{source.name}</h4>
-          <span className="text-cosmic-400 text-xs">{source.protocol}</span>
+          <span className="text-muted text-xs">{source.protocol}</span>
         </div>
         <div className="text-right">
           <div className="text-mythic-cyan font-bold text-xl">{source.apy.toFixed(1)}%</div>
-          <div className="text-cosmic-500 text-xs">APY</div>
+          <div className="stat-label">APY</div>
         </div>
       </div>
 
-      <p className="text-cosmic-400 text-sm mb-3">{source.description}</p>
+      <p className="text-muted text-sm mb-3">{source.description}</p>
 
       <div className="flex items-center justify-between text-sm">
         <div>
-          <span className="text-cosmic-500">TVL: </span>
+          <span className="stat-label">TVL: </span>
           <span className="text-white">{source.tvl}</span>
         </div>
-        <span
-          className={`px-2 py-0.5 rounded-full text-xs font-medium border ${risk.bg} ${risk.text} ${risk.border}`}
-        >
+        <span className={`badge border ${risk.bg} ${risk.text} ${risk.border}`}>
           {source.riskLevel.charAt(0).toUpperCase() + source.riskLevel.slice(1)} Risk
         </span>
       </div>
 
-      {source.isMock && (
-        <div className="mt-3 pt-3 border-t border-cosmic-700/50">
-          <span className="text-cosmic-600 text-xs">(Mock data for Stage 1)</span>
-        </div>
-      )}
-
       {isSelected && (
-        <div className="mt-3 pt-3 border-t border-mythic-purple/30">
+        <div className="mt-3 pt-3 section-divider border-mythic-purple/30">
           <div className="flex items-center gap-2 text-mythic-purple text-sm">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path

@@ -96,3 +96,116 @@ body {
     transform: translateX(100%);
   }
 }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.card {
+  @apply bg-cosmic-900/50 border border-cosmic-700/50 rounded-xl backdrop-blur-sm;
+}
+
+.card-padded {
+  @apply card p-4;
+}
+
+.card-padded-lg {
+  @apply card p-6;
+}
+
+.section-divider {
+  @apply border-t border-cosmic-700/50;
+}
+
+.progress-bar {
+  @apply h-2 bg-cosmic-800 rounded-full overflow-hidden;
+}
+
+.progress-fill {
+  @apply h-full transition-all duration-500;
+}
+
+.btn-primary {
+  @apply px-8 py-4 bg-gradient-to-r from-mythic-purple to-mythic-cyan text-white font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50;
+}
+
+.btn-secondary {
+  @apply px-4 py-2 bg-cosmic-800 hover:bg-cosmic-700 text-white font-medium rounded-lg transition-colors;
+}
+
+.btn-ghost {
+  @apply px-4 py-2 text-cosmic-400 hover:text-white hover:bg-cosmic-800/50 rounded-lg transition-all;
+}
+
+.stat-value {
+  @apply font-bold;
+}
+
+.stat-label {
+  @apply text-cosmic-500 text-xs;
+}
+
+.icon-box {
+  @apply w-12 h-12 rounded-lg flex items-center justify-center;
+}
+
+.icon-box-sm {
+  @apply w-10 h-10 rounded-lg flex items-center justify-center;
+}
+
+.text-muted {
+  @apply text-cosmic-400;
+}
+
+.text-label {
+  @apply text-cosmic-400 text-sm;
+}
+
+.badge {
+  @apply px-2 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge-mythic {
+  @apply badge bg-mythic-purple text-white;
+}
+
+.badge-common {
+  @apply badge bg-cosmic-600 text-white;
+}
+
+.badge-undetermined {
+  @apply badge bg-cosmic-700 text-cosmic-300;
+}
+
+.input-display {
+  @apply bg-cosmic-800/50 rounded-lg px-4 py-2;
+}
+
+.stat-box {
+  @apply bg-cosmic-800/50 rounded-lg p-2;
+}
+
+.modal-overlay {
+  @apply fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm;
+}
+
+.modal-content {
+  @apply bg-cosmic-900 border border-cosmic-700 rounded-xl p-6 max-w-md mx-4;
+}
+
+.card-selectable {
+  @apply card p-4 cursor-pointer transition-all hover:border-cosmic-600;
+}
+
+.card-selected {
+  @apply border-mythic-purple ring-2 ring-mythic-purple/30;
+}
