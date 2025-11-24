@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getWallets, Wallet } from '@massalabs/wallet-provider';
 
 export type WalletStatus = 'disconnected' | 'connecting' | 'connected' | 'no-wallet';
@@ -37,10 +37,14 @@ const initialState: MassaWalletState = {
   error: null,
 };
 
+const WALLET_CONNECTED_KEY = 'elydr-wallet-connected';
+
 export function useMassaWallet(): UseMassaWalletReturn {
   const [state, setState] = useState<MassaWalletState>(initialState);
   const [availableWallets, setAvailableWallets] = useState<Wallet[]>([]);
+  const autoConnectAttempted = useRef(false);
 
+  // Detect wallets
   useEffect(() => {
     const detectWallets = async () => {
       try {
@@ -132,6 +136,11 @@ export function useMassaWallet(): UseMassaWalletReturn {
         error: null,
       });
 
+      // Save connection state
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(WALLET_CONNECTED_KEY, 'true');
+      }
+
       try {
         if (wallet.listenAccountChanges) {
           wallet.listenAccountChanges(async (newAddress: string) => {
@@ -186,8 +195,26 @@ export function useMassaWallet(): UseMassaWalletReturn {
       console.error('Error disconnecting:', err);
     }
 
+    // Clear connection state
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(WALLET_CONNECTED_KEY);
+    }
+
     setState(initialState);
   }, [state.wallet]);
+
+  // Auto-connect if previously connected
+  useEffect(() => {
+    if (autoConnectAttempted.current) return;
+    if (availableWallets.length === 0) return;
+    if (state.status !== 'disconnected') return;
+
+    const wasConnected = typeof window !== 'undefined' && localStorage.getItem(WALLET_CONNECTED_KEY) === 'true';
+    if (wasConnected) {
+      autoConnectAttempted.current = true;
+      connect();
+    }
+  }, [availableWallets, state.status, connect]);
 
   const refreshBalance = useCallback(async () => {
     if (!state.account) return;
