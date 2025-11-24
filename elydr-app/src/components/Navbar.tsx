@@ -63,7 +63,7 @@ export function Navbar() {
             {wallet.isConnected ? (
               <div className="flex items-center gap-3">
                 <div className="hidden sm:flex flex-col items-end">
-                  <span className="text-xs text-cosmic-400">{wallet.networkName}</span>
+                  <span className="text-xs text-mythic-cyan font-medium">{wallet.balance}</span>
                   <span className="text-sm text-white font-mono">{truncateAddress(wallet.address)}</span>
                 </div>
                 <button

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useElydr } from '@/context/ElydrContext';
 import { CountdownTimer, YieldSourceCard, PetCard, StepIndicator } from '@/components';
@@ -21,14 +21,21 @@ export default function MintPage() {
     network,
   } = useElydr();
 
-  const [step, setStep] = useState<MintStep>(() => {
-    if (!wallet.isConnected) return 'connect';
-    if (!currentPet) return 'mint';
-    if (!currentPet.linkedYieldSourceId) return 'link';
-    return 'complete';
-  });
+  const [step, setStep] = useState<MintStep>('connect');
   const [selectedYieldSource, setSelectedYieldSource] = useState<string | null>(null);
   const [mintingState, setMintingState] = useState<'idle' | 'minting' | 'success'>('idle');
+
+  useEffect(() => {
+    if (!wallet.isConnected) {
+      setStep('connect');
+    } else if (!currentPet) {
+      setStep('mint');
+    } else if (!currentPet.linkedYieldSourceId) {
+      setStep('link');
+    } else {
+      setStep('complete');
+    }
+  }, [wallet.isConnected, currentPet]);
 
   const handleConnect = () => {
     connectWallet();
