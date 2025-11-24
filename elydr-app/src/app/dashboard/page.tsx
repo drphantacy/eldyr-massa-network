@@ -8,7 +8,7 @@ import { PetCard, CountdownTimer, EvolutionLog, YieldSourceCard } from '@/compon
 type TabType = 'summary' | 'details';
 
 export default function DashboardPage() {
-  const { wallet, currentPet, yieldSources, simulateEvolution } = useElydr();
+  const { wallet, pets, currentPet, selectedPetId, selectPet, yieldSources, simulateEvolution } = useElydr();
   const [activeTab, setActiveTab] = useState<TabType>('summary');
 
   const linkedYieldSource = yieldSources.find(
@@ -55,6 +55,45 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {pets.length > 1 && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-cosmic-400 text-sm">Your Elydrs:</span>
+              <span className="text-mythic-cyan text-sm font-bold">{pets.length}</span>
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {pets.map((pet) => (
+                <button
+                  key={pet.id}
+                  onClick={() => selectPet(pet.id)}
+                  className={`flex-shrink-0 px-4 py-3 rounded-xl transition-all ${
+                    (selectedPetId === pet.id || (!selectedPetId && pet.id === pets[0]?.id))
+                      ? 'bg-gradient-to-r from-mythic-purple/30 to-mythic-cyan/30 border-2 border-mythic-purple'
+                      : 'bg-cosmic-800/50 border border-cosmic-700/50 hover:border-cosmic-600'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">
+                      {pet.stage === 'egg' ? '🥚' : pet.stage === 'hatchling' ? '🐣' : pet.stage === 'young' ? '🐉' : pet.stage === 'mature' ? '🔥' : '⚡'}
+                    </span>
+                    <div className="text-left">
+                      <div className="text-white text-sm font-medium">{pet.name}</div>
+                      <div className="text-cosmic-400 text-xs capitalize">{pet.stage} • Lv.{pet.level}</div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+              <Link
+                href="/mint"
+                className="flex-shrink-0 px-4 py-3 rounded-xl bg-cosmic-800/30 border border-dashed border-cosmic-600 hover:border-mythic-purple transition-colors flex items-center gap-2"
+              >
+                <span className="text-2xl">+</span>
+                <span className="text-cosmic-400 text-sm">Mint New</span>
+              </Link>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-6">
             <PetCard pet={currentPet} yieldSource={linkedYieldSource} size="lg" />
@@ -75,27 +114,8 @@ export default function DashboardPage() {
                   Enter Battleground
                 </Link>
               </div>
-              <p className="text-cosmic-600 text-xs mt-3 text-center">
-                (Simulation for Stage 1 - Real autonomous execution in Stage 4)
-              </p>
             </div>
 
-            <div className="bg-cosmic-900/50 border border-cosmic-700/50 rounded-xl p-4 backdrop-blur-sm">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-mythic-cyan/20 rounded-lg flex items-center justify-center">
-                  <span className="text-xl">🤖</span>
-                </div>
-                <div>
-                  <h3 className="text-white font-bold">AI Coach</h3>
-                  <span className="text-cosmic-500 text-xs">Coming in Stage 5</span>
-                </div>
-              </div>
-              <div className="bg-cosmic-800/50 rounded-lg p-3">
-                <p className="text-cosmic-300 text-sm italic">
-                  &quot;Your Elydr is happy with your current yield. Keep it consistent for a mythic evolution path!&quot;
-                </p>
-              </div>
-            </div>
           </div>
 
           <div className="lg:col-span-2 space-y-6">
@@ -233,17 +253,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="mt-8 bg-cosmic-800/30 border border-cosmic-700/30 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">ℹ️</span>
-            <div>
-              <span className="text-cosmic-300 text-sm">
-                <strong className="text-white">Stage 1:</strong> Click &quot;Simulate 30-min Tick&quot; to trigger evolution checks manually.
-                In Stage 4, Massa&apos;s autonomous smart contracts will handle this automatically.
-              </span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
