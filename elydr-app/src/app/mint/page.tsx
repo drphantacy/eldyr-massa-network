@@ -27,6 +27,7 @@ export default function MintPage() {
   const [selectedYieldSource, setSelectedYieldSource] = useState<string | null>(null);
   const [mintingState, setMintingState] = useState<'idle' | 'minting' | 'success'>('idle');
   const [mintingNewEgg, setMintingNewEgg] = useState(false);
+  const [isLinking, setIsLinking] = useState(false);
 
   useEffect(() => {
     if (!wallet.isConnected) {
@@ -66,7 +67,29 @@ export default function MintPage() {
 
   const handleLinkYield = async () => {
     if (!selectedYieldSource) return;
-    await linkYieldSource(selectedYieldSource);
+    setIsLinking(true);
+
+    const maxRetries = 5;
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await linkYieldSource(selectedYieldSource);
+        setIsLinking(false);
+        return;
+      } catch (error) {
+        lastError = error as Error;
+        console.log(`Link attempt ${attempt}/${maxRetries} failed, retrying...`);
+
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+    }
+
+    setIsLinking(false);
+    console.error('Failed to link yield source after all retries:', lastError);
+    throw lastError;
   };
 
   const handleContinue = () => {
@@ -188,10 +211,17 @@ export default function MintPage() {
               <div className="flex justify-center">
                 <button
                   onClick={handleLinkYield}
-                  disabled={!selectedYieldSource}
+                  disabled={!selectedYieldSource || isLinking}
                   className="px-8 py-4 bg-gradient-to-r from-mythic-purple to-mythic-cyan text-white font-bold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Link Yield Source
+                  {isLinking ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Linking...
+                    </span>
+                  ) : (
+                    'Link Yield Source'
+                  )}
                 </button>
               </div>
             </div>
