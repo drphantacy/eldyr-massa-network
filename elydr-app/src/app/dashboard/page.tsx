@@ -18,10 +18,11 @@ type ModalState = {
 };
 
 export default function DashboardPage() {
-  const { wallet, pets, currentPet, selectedPetId, selectPet, yieldSources, simulateEvolution, stakeToPet, unstakeFromPet, releasePet, refreshPetsFromChain, error, isLoading } = useElydr();
+  const { wallet, pets, currentPet, selectedPetId, selectPet, yieldSources, simulateEvolution, stakeToPet, unstakeFromPet, releasePet, refreshPetsFromChain, error, isLoading, isLoadingPets } = useElydr();
   const [activeTab, setActiveTab] = useState<TabType>('summary');
+  const [stakingTab, setStakingTab] = useState<'stake' | 'unstake'>('stake');
   const [stakeAmount, setStakeAmount] = useState('');
-  const [unstakePercentage, setUnstakePercentage] = useState(100);
+  const [unstakeAmount, setUnstakeAmount] = useState('');
   const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
     type: 'info',
@@ -49,7 +50,6 @@ export default function DashboardPage() {
     }
     try {
       await stakeToPet(stakeAmount);
-      await refreshPetsFromChain();
       setStakeAmount('');
       setModalState({
         isOpen: true,
@@ -63,26 +63,43 @@ export default function DashboardPage() {
   };
 
   const handleUnstake = async () => {
-    if (unstakePercentage <= 0) {
+    const amount = parseFloat(unstakeAmount);
+    if (!unstakeAmount || amount <= 0) {
       setModalState({
         isOpen: true,
         type: 'warning',
-        title: 'Invalid Percentage',
-        message: 'Please enter a valid percentage to unstake',
+        title: 'Invalid Amount',
+        message: 'Please enter a valid amount to unstake',
+      });
+      return;
+    }
+    if (amount > (currentPet?.stakedAmount || 0)) {
+      setModalState({
+        isOpen: true,
+        type: 'warning',
+        title: 'Insufficient Stake',
+        message: `You can only unstake up to ${(currentPet?.stakedAmount || 0).toFixed(2)} MAS`,
       });
       return;
     }
     try {
-      await unstakeFromPet(unstakePercentage);
-      await refreshPetsFromChain();
+      const percentage = Math.round((amount / (currentPet?.stakedAmount || 1)) * 100);
+      await unstakeFromPet(percentage);
+      setUnstakeAmount('');
       setModalState({
         isOpen: true,
         type: 'success',
         title: 'Unstake Successful!',
-        message: `Successfully unstaked ${unstakePercentage}% from your Elydr.`,
+        message: `Successfully unstaked approximately ${amount.toFixed(2)} MAS from your Elydr.`,
       });
     } catch (err) {
       console.error('Unstake failed:', err);
+      setModalState({
+        isOpen: true,
+        type: 'error',
+        title: 'Unstake Failed',
+        message: err instanceof Error ? err.message : 'Failed to unstake. Please try again.',
+      });
     }
   };
 
@@ -111,7 +128,7 @@ export default function DashboardPage() {
   };
 
   // Show loader while checking blockchain on first connect
-  if (wallet.isConnected && !currentPet && isLoading) {
+  if (wallet.isConnected && !currentPet && isLoadingPets) {
     return (
       <div className="min-h-screen py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
@@ -240,55 +257,105 @@ export default function DashboardPage() {
           <div className="lg:col-span-1 space-y-6">
             <PetCard pet={currentPet} yieldSource={linkedYieldSource} size="lg" />
 
-            <div className="bg-cosmic-900/50 border border-cosmic-700/50 rounded-xl p-4 backdrop-blur-sm">
-              <h3 className="text-white font-bold mb-4">Staking</h3>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-cosmic-400">Staked Amount</span>
-                    <span className="text-mythic-cyan font-bold">{((currentPet.stakedAmount || 0) / 100_000_000).toFixed(2)} MAS</span>
-                  </div>
-                  <div className="flex gap-2">
+            <div className="bg-cosmic-900/50 border border-cosmic-700/50 rounded-xl backdrop-blur-sm">
+              <div className="px-4 py-3 border-b border-cosmic-700/50 flex justify-between items-center">
+                <h3 className="text-white font-bold">Staking</h3>
+                <div className="flex justify-between text-sm">
+                  <span className="text-cosmic-400">Staked: </span>
+                  <span className="text-mythic-cyan font-bold ml-2">{(currentPet.stakedAmount || 0).toFixed(2)} MAS</span>
+                </div>
+              </div>
+
+              <div className="flex gap-2 px-4 pt-3">
+                <button
+                  onClick={() => setStakingTab('stake')}
+                  className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
+                    stakingTab === 'stake'
+                      ? 'bg-mythic-purple text-white'
+                      : 'bg-cosmic-800 text-cosmic-400 hover:text-white'
+                  }`}
+                >
+                  Stake
+                </button>
+                <button
+                  onClick={() => setStakingTab('unstake')}
+                  className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
+                    stakingTab === 'unstake'
+                      ? 'bg-mythic-purple text-white'
+                      : 'bg-cosmic-800 text-cosmic-400 hover:text-white'
+                  }`}
+                >
+                  Unstake
+                </button>
+              </div>
+
+              <div className="p-4">
+                {stakingTab === 'stake' ? (
+                  <div className="space-y-3">
                     <input
                       type="number"
                       value={stakeAmount}
                       onChange={(e) => setStakeAmount(e.target.value)}
-                      placeholder="Amount to stake"
-                      className="flex-1 px-3 py-2 bg-cosmic-800 border border-cosmic-600 rounded-lg text-white placeholder-cosmic-500 focus:outline-none focus:border-mythic-purple"
-                      step="0.1"
+                      placeholder="Amount to stake (MAS)"
+                      className="w-full px-3 py-2 bg-cosmic-800 border border-cosmic-600 rounded-lg text-white placeholder-cosmic-500 focus:outline-none focus:border-mythic-purple"
+                      step="0.01"
                       min="0"
                     />
                     <button
                       onClick={handleStake}
-                      disabled={!stakeAmount || parseFloat(stakeAmount) <= 0 || isLoading}
-                      className="px-4 py-2 bg-gradient-to-r from-mythic-purple to-mythic-cyan text-white font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={!stakeAmount || parseFloat(stakeAmount) <= 0 || isLoading || isLoadingPets}
+                      className="w-full py-2 bg-gradient-to-r from-mythic-purple to-mythic-cyan text-white font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isLoading ? 'Staking...' : 'Stake'}
+                      {isLoading ? 'Staking...' : isLoadingPets ? 'Loading...' : 'Stake'}
                     </button>
                   </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-cosmic-400">Unstake</span>
-                    <span className="text-white font-bold">{unstakePercentage}%</span>
+                ) : (
+                  <div className="space-y-3">
+                    <input
+                      type="number"
+                      value={unstakeAmount}
+                      onChange={(e) => setUnstakeAmount(e.target.value)}
+                      placeholder="Amount to unstake (MAS)"
+                      className="w-full px-3 py-2 bg-cosmic-800 border border-cosmic-600 rounded-lg text-white placeholder-cosmic-500 focus:outline-none focus:border-mythic-purple"
+                      step="0.01"
+                      min="0"
+                      max={currentPet.stakedAmount || 0}
+                    />
+                    <div className="flex gap-2 text-xs">
+                      <button
+                        onClick={() => setUnstakeAmount(((currentPet.stakedAmount || 0) * 0.25).toFixed(2))}
+                        className="px-2 py-1 bg-cosmic-800 text-cosmic-400 rounded hover:text-white transition-colors"
+                      >
+                        25%
+                      </button>
+                      <button
+                        onClick={() => setUnstakeAmount(((currentPet.stakedAmount || 0) * 0.5).toFixed(2))}
+                        className="px-2 py-1 bg-cosmic-800 text-cosmic-400 rounded hover:text-white transition-colors"
+                      >
+                        50%
+                      </button>
+                      <button
+                        onClick={() => setUnstakeAmount(((currentPet.stakedAmount || 0) * 0.75).toFixed(2))}
+                        className="px-2 py-1 bg-cosmic-800 text-cosmic-400 rounded hover:text-white transition-colors"
+                      >
+                        75%
+                      </button>
+                      <button
+                        onClick={() => setUnstakeAmount((currentPet.stakedAmount || 0).toFixed(2))}
+                        className="px-2 py-1 bg-cosmic-800 text-cosmic-400 rounded hover:text-white transition-colors"
+                      >
+                        Max
+                      </button>
+                    </div>
+                    <button
+                      onClick={handleUnstake}
+                      disabled={!currentPet.stakedAmount || currentPet.stakedAmount === 0 || isLoading || isLoadingPets || !unstakeAmount || parseFloat(unstakeAmount) <= 0}
+                      className="w-full py-2 bg-cosmic-800 border border-cosmic-600 text-white font-medium rounded-lg hover:bg-cosmic-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isLoading ? 'Unstaking...' : isLoadingPets ? 'Loading...' : 'Unstake'}
+                    </button>
                   </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="100"
-                    value={unstakePercentage}
-                    onChange={(e) => setUnstakePercentage(parseInt(e.target.value))}
-                    className="w-full"
-                  />
-                  <button
-                    onClick={handleUnstake}
-                    disabled={!currentPet.stakedAmount || currentPet.stakedAmount === 0 || isLoading}
-                    className="w-full mt-2 py-2 bg-cosmic-800 border border-cosmic-600 text-white font-medium rounded-lg hover:bg-cosmic-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isLoading ? 'Unstaking...' : `Unstake ${((currentPet.stakedAmount || 0) * unstakePercentage / 100 / 100_000_000).toFixed(2)} MAS`}
-                  </button>
-                </div>
+                )}
               </div>
             </div>
 

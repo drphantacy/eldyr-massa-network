@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { ElydrPet, YieldSource, Tournament, LeaderboardEntry, WalletState, EvolutionEvent } from '@/types';
 import { mockYieldSources, mockTournaments, mockLeaderboard } from '@/data/mockData';
 import { useMassaWallet } from '@/hooks/useMassaWallet';
@@ -38,6 +38,7 @@ interface ElydrContextType {
   tournaments: Tournament[];
   leaderboard: LeaderboardEntry[];
   isLoading: boolean;
+  isLoadingPets: boolean;
   error: string | null;
   walletError: string | null;
   contractAddress: string;
@@ -72,7 +73,9 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
   const [pets, setPets] = useState<ElydrPet[]>([]);
   const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingPets, setIsLoadingPets] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isLoadingPetsRef = useRef(false);
 
   const currentPet = useMemo(() => {
     if (!selectedPetId) return pets[0] || null;
@@ -123,16 +126,18 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
   }, [selectedPetId]);
 
   useEffect(() => {
-    if (wallet.isConnected && massaWallet.account && pets.length === 0) {
+    if (wallet.isConnected && massaWallet.account && !isLoadingPetsRef.current) {
+      console.log('Wallet connected, loading pets from chain...');
       loadPetsFromChainInternal();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet.isConnected, massaWallet.account]);
 
   const loadPetsFromChainInternal = async () => {
-    if (!massaWallet.account) return;
+    if (!massaWallet.account || isLoadingPetsRef.current) return;
 
-    setIsLoading(true);
+    isLoadingPetsRef.current = true;
+    setIsLoadingPets(true);
     try {
       const totalSupply = await getTotalSupply(massaWallet.account);
       const loadedPets: ElydrPet[] = [];
@@ -141,7 +146,10 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
         try {
           const onChainPet = await getPetFromChain(massaWallet.account, i);
           if (onChainPet.owner === massaWallet.address) {
-            loadedPets.push(onChainPetToElydrPet(onChainPet) as ElydrPet);
+            console.log(`Loading pet #${i} - Raw stakedAmount (nanoMAS):`, onChainPet.stakedAmount);
+            const convertedPet = onChainPetToElydrPet(onChainPet) as ElydrPet;
+            console.log(`Pet #${i} after conversion - stakedAmount (MAS):`, convertedPet.stakedAmount);
+            loadedPets.push(convertedPet);
           }
         } catch (e) {
           // Silently skip pets that don't exist or can't be loaded
@@ -157,7 +165,8 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.error('Failed to load pets from chain:', err);
     } finally {
-      setIsLoading(false);
+      setIsLoadingPets(false);
+      isLoadingPetsRef.current = false;
     }
   };
 
@@ -212,28 +221,23 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
 
       await mintPetOnChain(massaWallet.account);
 
-      // Create temporary local pet for immediate UI feedback
       const tempPet = createNewPet(expectedPetId);
       setPets(prev => [...prev, tempPet]);
       setSelectedPetId(expectedPetId);
 
-      // Wait for blockchain to sync, then fetch real pet data
       await new Promise(resolve => setTimeout(resolve, 3000));
 
       try {
         const onChainPet = await getPetFromChain(massaWallet.account, Number(expectedPetId));
         const realPet = onChainPetToElydrPet(onChainPet) as ElydrPet;
 
-        // Replace temporary pet with real blockchain data
         setPets(prev => prev.map(pet =>
           pet.id === expectedPetId ? realPet : pet
         ));
 
-        // Update selected pet ID to the real blockchain ID
         setSelectedPetId(realPet.id);
       } catch (fetchErr) {
         console.log('Pet not yet queryable, using local data');
-        // Keep the temporary pet if blockchain fetch fails
       }
 
       return expectedPetId;
@@ -298,15 +302,10 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     try {
       await stakeToPetOnChain(massaWallet.account, Number(currentPet.id), amount);
-      await new Promise(resolve => setTimeout(resolve, 5000));
 
-      const onChainPet = await getPetFromChain(massaWallet.account, Number(currentPet.id));
-      const updatedPet = onChainPetToElydrPet(onChainPet) as ElydrPet;
-
-      console.log('Updated pet after staking:', updatedPet);
-
+      const newStakedAmount = Math.round(((currentPet.stakedAmount || 0) + parseFloat(amount)) * 100) / 100;
       setPets(prev => prev.map(pet =>
-        pet.id === currentPet.id ? updatedPet : pet
+        pet.id === currentPet.id ? { ...pet, stakedAmount: newStakedAmount } : pet
       ));
     } catch (err) {
       console.error('Failed to stake:', err);
@@ -331,15 +330,11 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     try {
       await unstakeFromPetOnChain(massaWallet.account, Number(currentPet.id), percentage);
-      await new Promise(resolve => setTimeout(resolve, 5000));
 
-      const onChainPet = await getPetFromChain(massaWallet.account, Number(currentPet.id));
-      const updatedPet = onChainPetToElydrPet(onChainPet) as ElydrPet;
-
-      console.log('Updated pet after unstaking:', updatedPet);
-
+      const unstakeAmount = (currentPet.stakedAmount || 0) * percentage / 100;
+      const newStakedAmount = Math.round(((currentPet.stakedAmount || 0) - unstakeAmount) * 100) / 100;
       setPets(prev => prev.map(pet =>
-        pet.id === currentPet.id ? updatedPet : pet
+        pet.id === currentPet.id ? { ...pet, stakedAmount: newStakedAmount } : pet
       ));
     } catch (err) {
       console.error('Failed to unstake:', err);
