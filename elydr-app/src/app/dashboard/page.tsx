@@ -49,6 +49,7 @@ export default function DashboardPage() {
     }
     try {
       await stakeToPet(stakeAmount);
+      await refreshPetsFromChain();
       setStakeAmount('');
       setModalState({
         isOpen: true,
@@ -73,6 +74,7 @@ export default function DashboardPage() {
     }
     try {
       await unstakeFromPet(unstakePercentage);
+      await refreshPetsFromChain();
       setModalState({
         isOpen: true,
         type: 'success',
