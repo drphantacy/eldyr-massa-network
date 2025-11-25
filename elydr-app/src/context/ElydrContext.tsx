@@ -403,6 +403,7 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
       tournaments: mockTournaments,
       leaderboard: mockLeaderboard,
       isLoading,
+      isLoadingPets,
       error,
       walletError: massaWallet.error,
       contractAddress: CONTRACT_ADDRESS,
@@ -425,6 +426,7 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
       unstakeFromPet,
       releasePet,
       isLoading,
+      isLoadingPets,
       error,
       massaWallet.error,
     ]
