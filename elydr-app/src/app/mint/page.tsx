@@ -61,12 +61,12 @@ export default function MintPage() {
   const handleMintAnother = () => {
     setMintingNewEgg(true);
     setMintingState('idle');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleLinkYield = () => {
+  const handleLinkYield = async () => {
     if (!selectedYieldSource) return;
-    linkYieldSource(selectedYieldSource);
-    setStep('complete');
+    await linkYieldSource(selectedYieldSource);
   };
 
   const handleContinue = () => {

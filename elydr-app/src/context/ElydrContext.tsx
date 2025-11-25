@@ -143,7 +143,7 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
             loadedPets.push(onChainPetToElydrPet(onChainPet) as ElydrPet);
           }
         } catch (e) {
-          console.error(`Failed to load pet ${i}:`, e);
+          // Silently skip pets that don't exist or can't be loaded
         }
       }
 
@@ -205,21 +205,37 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
     setError(null);
 
     try {
-      const result = await mintPetOnChain(massaWallet.account);
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Get current total supply to know what the next pet ID will be
+      const currentSupply = await getTotalSupply(massaWallet.account);
+      const expectedPetId = (currentSupply + 1).toString();
+
+      await mintPetOnChain(massaWallet.account);
+
+      // Create temporary local pet for immediate UI feedback
+      const tempPet = createNewPet(expectedPetId);
+      setPets(prev => [...prev, tempPet]);
+      setSelectedPetId(expectedPetId);
+
+      // Wait for blockchain to sync, then fetch real pet data
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
       try {
-        const onChainPet = await getPetFromChain(massaWallet.account, Number(result.petId));
-        const newPet = onChainPetToElydrPet(onChainPet) as ElydrPet;
-        setPets(prev => [...prev, newPet]);
-        setSelectedPetId(result.petId);
+        const onChainPet = await getPetFromChain(massaWallet.account, Number(expectedPetId));
+        const realPet = onChainPetToElydrPet(onChainPet) as ElydrPet;
+
+        // Replace temporary pet with real blockchain data
+        setPets(prev => prev.map(pet =>
+          pet.id === expectedPetId ? realPet : pet
+        ));
+
+        // Update selected pet ID to the real blockchain ID
+        setSelectedPetId(realPet.id);
       } catch (fetchErr) {
-        console.error('Failed to fetch minted pet, using local fallback:', fetchErr);
-        const newPet = createNewPet(result.petId);
-        setPets(prev => [...prev, newPet]);
-        setSelectedPetId(result.petId);
+        console.log('Pet not yet queryable, using local data');
+        // Keep the temporary pet if blockchain fetch fails
       }
 
-      return result.petId;
+      return expectedPetId;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Minting failed');
       throw err;
@@ -238,6 +254,7 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
 
     setIsLoading(true);
     try {
+      await new Promise(resolve => setTimeout(resolve, 3000));
       await linkYieldSourceOnChain(massaWallet.account, Number(currentPet.id), sourceId);
 
       setPets(prev => prev.map(pet =>
