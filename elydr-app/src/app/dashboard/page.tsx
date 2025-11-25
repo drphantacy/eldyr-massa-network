@@ -148,18 +148,13 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {error && (
+        {error &&
+         !error.includes('readonly call failed') &&
+         !error.includes('Pet does not exist') &&
+         !error.includes('VM Error') && (
           <div className="mb-6 bg-red-900/50 border border-red-700 rounded-xl p-4 backdrop-blur-sm">
             <div className="flex items-center justify-between">
               <span className="text-red-300 text-sm">⚠️ {error}</span>
-              {error.includes('does not exist') && (
-                <button
-                  onClick={refreshPetsFromChain}
-                  className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white text-sm rounded-lg transition-colors"
-                >
-                  Reload from Blockchain
-                </button>
-              )}
             </div>
           </div>
         )}
