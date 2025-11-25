@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useElydr } from '@/context/ElydrContext';
 import { CountdownTimer, YieldSourceCard, PetCard, StepIndicator } from '@/components';
+import { EXPLORER_URL } from '@/lib/contract';
 
 type MintStep = 'connect' | 'mint' | 'link' | 'complete';
 
@@ -257,7 +258,7 @@ export default function MintPage() {
             <p className="text-cosmic-500 text-xs mt-1">
               <span className="text-cosmic-400">Contract:</span>{' '}
               <a
-                href={`https://buildnet.massa.net/address/${contractAddress}`}
+                href={`${EXPLORER_URL}/address/${contractAddress}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-mythic-cyan hover:underline font-mono"

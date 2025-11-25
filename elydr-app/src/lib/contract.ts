@@ -1,8 +1,10 @@
 import { Args, Mas } from '@massalabs/massa-web3';
 
-export const CONTRACT_ADDRESS = 'AS1nx3LjgAkZkKRXCR3zNupaMHHUk2nKU5pm9BcCx9zKPVETbQSQ';
+export const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS!;
 
-export const NETWORK = 'Massa Buildnet';
+export const NETWORK = process.env.NEXT_PUBLIC_NETWORK_NAME!;
+
+export const EXPLORER_URL = process.env.NEXT_PUBLIC_EXPLORER_URL!;
 
 export const STAGES = ['egg', 'hatchling', 'young', 'mature', 'elder'] as const;
 export const PATHS = ['undetermined', 'common', 'mythic'] as const;
@@ -67,7 +69,7 @@ export async function mintPetOnChain(walletAccount: any): Promise<MintResult> {
 }
 
 export function getContractExplorerUrl(): string {
-  return `https://buildnet.massa.net/address/${CONTRACT_ADDRESS}`;
+  return `${EXPLORER_URL}/address/${CONTRACT_ADDRESS}`;
 }
 
 // Helper function to extract return value from readSC result

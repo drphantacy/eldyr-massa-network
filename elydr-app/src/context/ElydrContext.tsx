@@ -83,7 +83,7 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
       isConnected: massaWallet.status === 'connected',
       address: massaWallet.address,
       balance: massaWallet.balance,
-      networkId: 'massa-mainnet',
+      networkId: process.env.NEXT_PUBLIC_NETWORK_ID!,
       networkName: massaWallet.networkName,
     }),
     [massaWallet.status, massaWallet.address, massaWallet.balance, massaWallet.networkName]
@@ -340,9 +340,9 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
 
     setIsLoading(true);
     setError(null);
+
     try {
       await releasePetOnChain(massaWallet.account, Number(currentPet.id));
-      await new Promise(resolve => setTimeout(resolve, 2000));
 
       const updatedPets = pets.filter(pet => pet.id !== currentPet.id);
       setPets(updatedPets);
@@ -357,7 +357,7 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem(SELECTED_PET_KEY);
       }
     } catch (err) {
-      console.error('Failed to release pet:', err);
+      console.error('Failed to release pet on chain:', err);
       setError(err instanceof Error ? err.message : 'Failed to release pet');
       throw err;
     } finally {
