@@ -163,8 +163,16 @@ export default function DashboardPage() {
             <p className="text-cosmic-400">Monitor your Elydr&apos;s growth and evolution</p>
           </div>
 
-          <div className="bg-cosmic-900/50 border border-cosmic-700/50 rounded-xl px-6 py-3 backdrop-blur-sm">
-            <CountdownTimer targetDate={currentPet.nextCheckAt} label="Next autonomous check" />
+          <div className="flex flex-col gap-3">
+            <div className="bg-cosmic-900/50 border border-cosmic-700/50 rounded-xl px-6 py-3 backdrop-blur-sm">
+              <CountdownTimer targetDate={currentPet.nextCheckAt} label="Next autonomous check" />
+            </div>
+            <button
+              onClick={simulateEvolution}
+              className="px-6 py-2 bg-gradient-to-r from-mythic-purple to-mythic-cyan text-white font-medium rounded-xl hover:opacity-90 transition-opacity text-sm"
+            >
+              Simulate Autonomous Growth
+            </button>
           </div>
         </div>
 
@@ -285,12 +293,6 @@ export default function DashboardPage() {
             <div className="bg-cosmic-900/50 border border-cosmic-700/50 rounded-xl p-4 backdrop-blur-sm">
               <h3 className="text-white font-bold mb-4">Actions</h3>
               <div className="space-y-3">
-                <button
-                  onClick={simulateEvolution}
-                  className="w-full py-3 bg-gradient-to-r from-mythic-purple to-mythic-cyan text-white font-medium rounded-lg hover:opacity-90 transition-opacity"
-                >
-                  Simulate Autonomous Growth
-                </button>
                 <Link
                   href="/battleground"
                   className="block w-full py-3 bg-cosmic-800 text-center text-white font-medium rounded-lg hover:bg-cosmic-700 transition-colors"

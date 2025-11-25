@@ -175,6 +175,7 @@ export function onChainPetToElydrPet(pet: OnChainPet): {
   power: number;
   defense: number;
   agility: number;
+  stakedAmount: number;
 } {
   return {
     id: pet.id,
