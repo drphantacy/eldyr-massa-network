@@ -132,7 +132,7 @@ export const mockTournaments: Tournament[] = [
     participantsCount: 24,
     maxParticipants: 32,
     startTime: new Date(Date.now() - 3600000),
-    endTime: new Date(Date.now() + 86400000),
+    endTime: new Date(Date.now() - 3600000 + 1209600000),
   },
   {
     id: 'tourney-2',
@@ -147,7 +147,7 @@ export const mockTournaments: Tournament[] = [
     participantsCount: 45,
     maxParticipants: 64,
     startTime: new Date(Date.now() - 7200000),
-    endTime: new Date(Date.now() + 43200000),
+    endTime: new Date(Date.now() - 7200000 + 1209600000),
   },
   {
     id: 'tourney-3',
@@ -162,7 +162,7 @@ export const mockTournaments: Tournament[] = [
     participantsCount: 0,
     maxParticipants: 16,
     startTime: new Date(Date.now() + 86400000 * 3),
-    endTime: new Date(Date.now() + 86400000 * 4),
+    endTime: new Date(Date.now() + 86400000 * 3 + 1209600000),
   },
   {
     id: 'tourney-4',
@@ -177,7 +177,7 @@ export const mockTournaments: Tournament[] = [
     participantsCount: 32,
     maxParticipants: 32,
     startTime: new Date(Date.now() - 172800000),
-    endTime: new Date(Date.now() - 86400000),
+    endTime: new Date(Date.now() - 172800000 + 1209600000),
   },
 ];
 

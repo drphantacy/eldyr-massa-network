@@ -7,8 +7,8 @@ interface EvolutionLogProps {
   maxEvents?: number;
 }
 
-export function EvolutionLog({ events, maxEvents = 10 }: EvolutionLogProps) {
-  const displayEvents = events.slice(0, maxEvents);
+export function EvolutionLog({ events, maxEvents }: EvolutionLogProps) {
+  const displayEvents = maxEvents ? events.slice(0, maxEvents) : events;
 
   const formatTime = (date: Date) => {
     return new Date(date).toLocaleTimeString('en-US', {
@@ -46,7 +46,7 @@ export function EvolutionLog({ events, maxEvents = 10 }: EvolutionLogProps) {
         <p className="text-cosmic-400 text-xs">Autonomous contract execution history</p>
       </div>
 
-      <div className="divide-y divide-cosmic-800/50 max-h-80 overflow-y-auto">
+      <div className="divide-y divide-cosmic-800/50 max-h-[600px] overflow-y-auto">
         {displayEvents.length === 0 ? (
           <div className="px-4 py-8 text-center">
             <div className="text-cosmic-500 text-sm">No evolution events yet</div>

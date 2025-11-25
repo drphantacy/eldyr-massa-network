@@ -289,7 +289,7 @@ export default function DashboardPage() {
                   onClick={simulateEvolution}
                   className="w-full py-3 bg-gradient-to-r from-mythic-purple to-mythic-cyan text-white font-medium rounded-lg hover:opacity-90 transition-opacity"
                 >
-                  Simulate 30-min Tick
+                  Simulate Autonomous Growth
                 </button>
                 <Link
                   href="/battleground"

@@ -151,7 +151,7 @@ body {
 }
 
 .stat-label {
-  @apply text-cosmic-500 text-xs;
+  @apply text-cosmic-400 text-xs;
 }
 
 .icon-box {

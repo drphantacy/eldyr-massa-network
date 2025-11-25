@@ -1,11 +1,13 @@
 'use client';
 
-import { Tournament } from '@/types';
+import { Tournament, ElydrPet } from '@/types';
 import { useState } from 'react';
 
 interface TournamentCardProps {
   tournament: Tournament;
-  onEnter?: (tournamentId: string) => void;
+  pets?: ElydrPet[];
+  enteredPetId?: string;
+  onEnter?: (tournamentId: string, petId: string) => void;
 }
 
 const statusColors = {
@@ -14,18 +16,45 @@ const statusColors = {
   completed: 'bg-cosmic-600/20 text-cosmic-400 border-cosmic-600/30',
 };
 
-export function TournamentCard({ tournament, onEnter }: TournamentCardProps) {
+export function TournamentCard({ tournament, pets = [], enteredPetId, onEnter }: TournamentCardProps) {
   const [showModal, setShowModal] = useState(false);
-  const [entered, setEntered] = useState(false);
+  const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
 
   const handleEnter = () => {
     setShowModal(true);
+    setSelectedPetId(null);
   };
 
   const confirmEntry = () => {
-    setEntered(true);
+    if (!selectedPetId) return;
     setShowModal(false);
-    onEnter?.(tournament.id);
+    onEnter?.(tournament.id, selectedPetId);
+  };
+
+  const stageOrder: Record<string, number> = {
+    egg: 0,
+    hatchling: 1,
+    young: 2,
+    mature: 3,
+    elder: 4,
+  };
+
+  const minStageLevel = stageOrder[tournament.minStage] || 0;
+
+  const eligiblePets = pets.filter((pet) => {
+    const petStageLevel = stageOrder[pet.stage] || 0;
+    return petStageLevel >= minStageLevel;
+  });
+
+  const getStageEmoji = (stage: string) => {
+    const emojis: Record<string, string> = {
+      egg: '🥚',
+      hatchling: '🐣',
+      young: '🦅',
+      mature: '🐉',
+      elder: '👑',
+    };
+    return emojis[stage] || '🥚';
   };
 
   const formatDate = (date: Date) => {
@@ -37,7 +66,7 @@ export function TournamentCard({ tournament, onEnter }: TournamentCardProps) {
     });
   };
 
-  const canEnter = tournament.status === 'active' && !entered;
+  const canEnter = tournament.status === 'active' && !enteredPetId && eligiblePets.length > 0;
 
   return (
     <>
@@ -88,12 +117,12 @@ export function TournamentCard({ tournament, onEnter }: TournamentCardProps) {
           >
             Enter Tournament
           </button>
-        ) : entered ? (
+        ) : enteredPetId ? (
           <button
             disabled
             className="w-full py-2 bg-green-600/20 text-green-400 font-medium rounded-lg border border-green-500/30"
           >
-            Entered
+            Entered (Pet #{enteredPetId})
           </button>
         ) : tournament.status === 'upcoming' ? (
           <button
@@ -114,17 +143,69 @@ export function TournamentCard({ tournament, onEnter }: TournamentCardProps) {
 
       {showModal && (
         <div className="modal-overlay">
-          <div className="modal-content">
-            <h3 className="text-white text-xl font-bold mb-2">Enter Tournament</h3>
+          <div className="modal-content max-w-lg">
+            <h3 className="text-white text-xl font-bold mb-2">Select Pet for Tournament</h3>
             <p className="text-cosmic-300 mb-4">
-              You&apos;re about to enter <span className="text-white">{tournament.name}</span>.
-              This will cost <span className="text-mythic-gold">{tournament.entryFee}</span>.
+              Choose which Elydr to enter in <span className="text-white">{tournament.name}</span>.
+              Entry fee: <span className="text-mythic-gold">{tournament.entryFee}</span>
             </p>
+
+            {eligiblePets.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-cosmic-400">
+                  You don&apos;t have any pets that meet the minimum stage requirement
+                  (<span className="text-white capitalize">{tournament.minStage}</span>).
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2 mb-4 max-h-80 overflow-y-auto">
+                {eligiblePets.map((pet) => (
+                  <button
+                    key={pet.id}
+                    onClick={() => setSelectedPetId(pet.id)}
+                    className={`w-full p-3 rounded-lg border-2 transition-all ${
+                      selectedPetId === pet.id
+                        ? 'border-mythic-purple bg-mythic-purple/10'
+                        : 'border-cosmic-700 bg-cosmic-900/30 hover:border-cosmic-600'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="text-2xl">{getStageEmoji(pet.stage)}</div>
+                      <div className="flex-1 text-left">
+                        <div className="text-white font-medium">{pet.name}</div>
+                        <div className="text-cosmic-400 text-sm capitalize">
+                          {pet.stage} • Level {pet.level}
+                        </div>
+                      </div>
+                      <div className="flex gap-3 text-xs">
+                        <div className="text-center">
+                          <div className="text-mythic-flame font-bold">{pet.power}</div>
+                          <div className="text-cosmic-500">PWR</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-mythic-cyan font-bold">{pet.defense}</div>
+                          <div className="text-cosmic-500">DEF</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-mythic-gold font-bold">{pet.agility}</div>
+                          <div className="text-cosmic-500">AGI</div>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="flex gap-3">
               <button onClick={() => setShowModal(false)} className="flex-1 btn-secondary">
                 Cancel
               </button>
-              <button onClick={confirmEntry} className="flex-1 btn-primary py-2 px-4">
+              <button
+                onClick={confirmEntry}
+                disabled={!selectedPetId}
+                className="flex-1 btn-primary py-2 px-4 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 Confirm Entry
               </button>
             </div>

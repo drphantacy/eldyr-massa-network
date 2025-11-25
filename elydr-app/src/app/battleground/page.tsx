@@ -7,12 +7,16 @@ import { TournamentCard, LeaderboardTable } from '@/components';
 type ViewType = 'tournaments' | 'leaderboard';
 
 export default function BattlegroundPage() {
-  const { tournaments, leaderboard, wallet, currentPet } = useElydr();
+  const { tournaments, leaderboard, wallet, currentPet, pets } = useElydr();
   const [activeView, setActiveView] = useState<ViewType>('tournaments');
-  const [enteredTournaments, setEnteredTournaments] = useState<string[]>([]);
+  const [tournamentEntries, setTournamentEntries] = useState<Record<string, string>>({});
 
-  const handleTournamentEnter = (tournamentId: string) => {
-    setEnteredTournaments((prev) => [...prev, tournamentId]);
+  const handleTournamentEnter = (tournamentId: string, petId: string) => {
+    setTournamentEntries((prev) => ({ ...prev, [tournamentId]: petId }));
+  };
+
+  const getEnteredCount = () => {
+    return Object.keys(tournamentEntries).length;
   };
 
   const activeTournaments = tournaments.filter((t) => t.status === 'active');
@@ -65,7 +69,7 @@ export default function BattlegroundPage() {
                   <div className="text-cosmic-500">AGI</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-green-400 font-bold">{enteredTournaments.length}</div>
+                  <div className="text-green-400 font-bold">{getEnteredCount()}</div>
                   <div className="text-cosmic-500">Entered</div>
                 </div>
               </div>
@@ -119,6 +123,8 @@ export default function BattlegroundPage() {
                     <TournamentCard
                       key={tournament.id}
                       tournament={tournament}
+                      pets={pets}
+                      enteredPetId={tournamentEntries[tournament.id]}
                       onEnter={handleTournamentEnter}
                     />
                   ))}
@@ -137,6 +143,8 @@ export default function BattlegroundPage() {
                     <TournamentCard
                       key={tournament.id}
                       tournament={tournament}
+                      pets={pets}
+                      enteredPetId={tournamentEntries[tournament.id]}
                       onEnter={handleTournamentEnter}
                     />
                   ))}
@@ -155,6 +163,8 @@ export default function BattlegroundPage() {
                     <TournamentCard
                       key={tournament.id}
                       tournament={tournament}
+                      pets={pets}
+                      enteredPetId={tournamentEntries[tournament.id]}
                       onEnter={handleTournamentEnter}
                     />
                   ))}
