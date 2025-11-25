@@ -251,7 +251,7 @@ export async function unstakeFromPet(
   const operation = await walletAccount.callSC({
     target: CONTRACT_ADDRESS,
     func: 'unstake',
-    parameter: new Args().addU64(BigInt(petId)).addU8(percentage).serialize(),
+    parameter: new Args().addU64(BigInt(petId)).addU8(BigInt(percentage)).serialize(),
     coins: Mas.fromString('0'),
   });
 

@@ -102,7 +102,7 @@ export function EvolutionLog({ events, maxEvents }: EvolutionLogProps) {
         )}
       </div>
 
-      {events.length > maxEvents && (
+      {maxEvents && events.length > maxEvents && (
         <div className="px-4 py-2 border-t border-cosmic-700/50 text-center">
           <span className="text-cosmic-500 text-xs">
             Showing {maxEvents} of {events.length} events
