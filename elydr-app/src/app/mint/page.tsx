@@ -43,7 +43,6 @@ export default function MintPage() {
 
   const handleConnect = () => {
     connectWallet();
-    setTimeout(() => setStep('mint'), 1000);
   };
 
   const handleMint = async () => {
@@ -52,7 +51,6 @@ export default function MintPage() {
       await mintPet();
       setMintingState('success');
       setMintingNewEgg(false);
-      setStep('link');
     } catch (error) {
       console.error('Mint error:', error);
       setMintingState('idle');
