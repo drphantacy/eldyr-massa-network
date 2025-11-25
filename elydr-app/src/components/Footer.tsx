@@ -64,11 +64,6 @@ export function Footer() {
                   Documentation
                 </a>
               </li>
-              <li>
-                <span className="text-cosmic-500 text-sm">
-                  Smart Contracts (Coming Soon)
-                </span>
-              </li>
             </ul>
           </div>
         </div>
@@ -77,12 +72,6 @@ export function Footer() {
           <p className="text-cosmic-500 text-sm">
             &copy; {new Date().getFullYear()} Elydr. Built on Massa.
           </p>
-          <div className="flex items-center gap-2">
-            <span className="text-cosmic-500 text-xs">Powered by</span>
-            <span className="text-mythic-cyan text-xs font-semibold">
-              Autonomous Smart Contracts
-            </span>
-          </div>
         </div>
       </div>
     </footer>
