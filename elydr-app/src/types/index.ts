@@ -19,6 +19,7 @@ export interface ElydrPet {
   stage: ElydrStage;
   path: ElydrPath;
   spriteType: ElydrSpriteType;
+  spriteId: number;
   level: number;
   growthPoints: number;
   totalGrowthPoints: number;

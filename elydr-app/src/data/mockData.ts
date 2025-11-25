@@ -106,6 +106,7 @@ export const createMockPet = (id: string = '1234'): ElydrPet => ({
   stage: 'hatchling',
   path: 'undetermined',
   spriteType: 'dragon',
+  spriteId: 1,
   level: 2,
   growthPoints: 17,
   totalGrowthPoints: 17,

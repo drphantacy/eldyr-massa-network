@@ -31,6 +31,7 @@ export interface OnChainPet {
   lastCheckTime: bigint;
   checkCount: bigint;
   stakedAmount: bigint;
+  spriteId: number;
 }
 
 export async function mintPetOnChain(walletAccount: any): Promise<MintResult> {
@@ -152,6 +153,7 @@ export async function getPetFromChain(walletAccount: any, petId: number): Promis
     lastCheckTime: args.nextU64(),
     checkCount: args.nextU64(),
     stakedAmount: args.nextU64(),
+    spriteId: Number(args.nextU8()),
   };
 }
 
@@ -162,6 +164,7 @@ export function onChainPetToElydrPet(pet: OnChainPet): {
   stage: 'egg' | 'hatchling' | 'young' | 'mature' | 'elder';
   path: 'undetermined' | 'common' | 'mythic';
   spriteType: 'dragon';
+  spriteId: number;
   level: number;
   growthPoints: number;
   totalGrowthPoints: number;
@@ -179,10 +182,11 @@ export function onChainPetToElydrPet(pet: OnChainPet): {
     stage: STAGES[pet.stage] || 'egg',
     path: PATHS[pet.path] || 'undetermined',
     spriteType: 'dragon',
+    spriteId: pet.spriteId,
     level: pet.level,
     growthPoints: Number(pet.growthPoints),
     totalGrowthPoints: Number(pet.totalGrowthPoints),
-    nextCheckAt: new Date(Number(pet.lastCheckTime) + 1800000), // +30 mins
+    nextCheckAt: new Date(Number(pet.lastCheckTime) + 120000), // +2 min
     linkedYieldSourceId: pet.linkedYieldSourceId || null,
     mintedAt: new Date(Number(pet.mintedAt)),
     history: [], // History not stored on chain

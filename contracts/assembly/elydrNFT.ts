@@ -39,6 +39,7 @@ export class ElydrPet {
   lastCheckTime: u64;
   checkCount: u64;
   stakedAmount: u64;
+  spriteId: u8;
 
   constructor() {
     this.id = 0;
@@ -56,6 +57,7 @@ export class ElydrPet {
     this.lastCheckTime = 0;
     this.checkCount = 0;
     this.stakedAmount = 0;
+    this.spriteId = 1;
   }
 
   serialize(): StaticArray<u8> {
@@ -75,6 +77,7 @@ export class ElydrPet {
       .add(this.lastCheckTime)
       .add(this.checkCount)
       .add(this.stakedAmount)
+      .add(this.spriteId)
       .serialize();
   }
 
@@ -96,6 +99,7 @@ export class ElydrPet {
     pet.lastCheckTime = args.nextU64().expect("Failed to deserialize lastCheckTime");
     pet.checkCount = args.nextU64().expect("Failed to deserialize checkCount");
     pet.stakedAmount = args.nextU64().expect("Failed to deserialize stakedAmount");
+    pet.spriteId = args.nextU8().expect("Failed to deserialize spriteId");
     return pet;
   }
 }
@@ -148,6 +152,9 @@ export function mint(_: StaticArray<u8>): StaticArray<u8> {
   pet.agility = 5;
   pet.lastCheckTime = Context.timestamp();
   pet.checkCount = 0;
+
+  const randomSeed = (Context.timestamp() + newPetId) % 7;
+  pet.spriteId = u8(randomSeed + 1);
 
   Storage.set(getPetKey(newPetId), pet.serialize());
   Storage.set(getOwnerOfKey(newPetId), stringToBytes(caller));

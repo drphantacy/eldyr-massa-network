@@ -1,6 +1,7 @@
 'use client';
 
 import { ElydrPet, ElydrStage, YieldSource } from '@/types';
+import { getSpritePosition } from '@/utils/sprite';
 
 interface PetCardProps {
   pet: ElydrPet;
@@ -44,6 +45,9 @@ export function PetCard({ pet, yieldSource, showStats = true, size = 'md' }: Pet
     lg: 'text-base',
   };
 
+  const petImageUrl = `/images/pet-${pet.spriteId || 1}.png`;
+  const spritePosition = getSpritePosition(pet.stage, pet.growthPoints);
+
   return (
     <div className="card-padded">
       <div className="flex justify-center mb-4">
@@ -51,7 +55,16 @@ export function PetCard({ pet, yieldSource, showStats = true, size = 'md' }: Pet
           className={`${sizeClasses[size]} bg-gradient-to-br ${stageColors[pet.stage]} rounded-xl flex items-center justify-center relative overflow-hidden animate-float`}
         >
           <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.1)_50%)] bg-[length:4px_4px]" />
-          <span className="text-4xl z-10">{stageEmoji[pet.stage]}</span>
+          <div
+            className="w-full h-full z-10"
+            style={{
+              backgroundImage: `url(${petImageUrl})`,
+              backgroundPosition: spritePosition.backgroundPosition,
+              backgroundSize: spritePosition.backgroundSize,
+              backgroundRepeat: 'no-repeat',
+              imageRendering: 'pixelated',
+            }}
+          />
           {pet.path === 'mythic' && (
             <div className="absolute inset-0 bg-mythic-purple/20 animate-pulse-slow" />
           )}
