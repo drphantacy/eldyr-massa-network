@@ -28,6 +28,17 @@ export function EvolutionLog({ events, maxEvents = 10 }: EvolutionLogProps) {
     return event.previousStage !== event.newStage;
   };
 
+  const getStageEmoji = (stage: string) => {
+    const emojis: Record<string, string> = {
+      egg: '🥚',
+      hatchling: '🐣',
+      young: '🦅',
+      mature: '🐉',
+      elder: '👑',
+    };
+    return emojis[stage] || '🥚';
+  };
+
   return (
     <div className="bg-cosmic-900/50 border border-cosmic-700/50 rounded-xl backdrop-blur-sm">
       <div className="px-4 py-3 border-b border-cosmic-700/50">
@@ -49,26 +60,40 @@ export function EvolutionLog({ events, maxEvents = 10 }: EvolutionLogProps) {
               key={index}
               className={`px-4 py-3 ${isEvolution(event) ? 'bg-mythic-purple/10' : ''}`}
             >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-cosmic-500 text-xs font-mono">
-                      {formatTime(event.timestamp)}
-                    </span>
-                    {isEvolution(event) && (
-                      <span className="px-1.5 py-0.5 bg-mythic-purple/20 text-mythic-purple text-xs rounded">
-                        EVOLVED
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-cosmic-300 text-sm mt-1">{event.message}</p>
+              <div className="flex items-start gap-3">
+                <div className="text-2xl flex-shrink-0 mt-1">
+                  {getStageEmoji(event.newStage)}
                 </div>
-                <div className="text-right ml-4">
-                  <div className={`font-bold ${getPointsColor(event.growthPointsAwarded)}`}>
-                    +{event.growthPointsAwarded}
+                <div className="flex-1 flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-cosmic-500 text-xs font-mono">
+                        {formatTime(event.timestamp)}
+                      </span>
+                      {isEvolution(event) && (
+                        <span className="px-1.5 py-0.5 bg-mythic-purple/20 text-mythic-purple text-xs rounded">
+                          EVOLVED
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-cosmic-300 text-sm mt-1">{event.message}</p>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-cosmic-500 text-xs">
+                        Yield: {event.yieldPercent.toFixed(1)}%
+                      </span>
+                      <span className="text-cosmic-600 text-xs">•</span>
+                      <span className="text-cosmic-500 text-xs capitalize">
+                        Stage: {event.newStage}
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-cosmic-500 text-xs">
-                    {event.yieldPercent.toFixed(1)}%
+                  <div className="text-right ml-4">
+                    <div className={`font-bold text-lg ${getPointsColor(event.growthPointsAwarded)}`}>
+                      +{event.growthPointsAwarded}
+                    </div>
+                    <div className="text-cosmic-600 text-xs">
+                      GP
+                    </div>
                   </div>
                 </div>
               </div>
