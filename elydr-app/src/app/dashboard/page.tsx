@@ -258,10 +258,10 @@ export default function DashboardPage() {
                     />
                     <button
                       onClick={handleStake}
-                      disabled={!stakeAmount || parseFloat(stakeAmount) <= 0}
+                      disabled={!stakeAmount || parseFloat(stakeAmount) <= 0 || isLoading}
                       className="px-4 py-2 bg-gradient-to-r from-mythic-purple to-mythic-cyan text-white font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Stake
+                      {isLoading ? 'Staking...' : 'Stake'}
                     </button>
                   </div>
                 </div>
@@ -281,10 +281,10 @@ export default function DashboardPage() {
                   />
                   <button
                     onClick={handleUnstake}
-                    disabled={!currentPet.stakedAmount || currentPet.stakedAmount === 0}
+                    disabled={!currentPet.stakedAmount || currentPet.stakedAmount === 0 || isLoading}
                     className="w-full mt-2 py-2 bg-cosmic-800 border border-cosmic-600 text-white font-medium rounded-lg hover:bg-cosmic-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Unstake {((currentPet.stakedAmount || 0) * unstakePercentage / 100 / 100_000_000).toFixed(2)} MAS
+                    {isLoading ? 'Unstaking...' : `Unstake ${((currentPet.stakedAmount || 0) * unstakePercentage / 100 / 100_000_000).toFixed(2)} MAS`}
                   </button>
                 </div>
               </div>

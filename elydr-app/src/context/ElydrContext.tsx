@@ -298,10 +298,12 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     try {
       await stakeToPetOnChain(massaWallet.account, Number(currentPet.id), amount);
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 5000));
 
       const onChainPet = await getPetFromChain(massaWallet.account, Number(currentPet.id));
       const updatedPet = onChainPetToElydrPet(onChainPet) as ElydrPet;
+
+      console.log('Updated pet after staking:', updatedPet);
 
       setPets(prev => prev.map(pet =>
         pet.id === currentPet.id ? updatedPet : pet
@@ -329,10 +331,12 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     try {
       await unstakeFromPetOnChain(massaWallet.account, Number(currentPet.id), percentage);
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 5000));
 
       const onChainPet = await getPetFromChain(massaWallet.account, Number(currentPet.id));
       const updatedPet = onChainPetToElydrPet(onChainPet) as ElydrPet;
+
+      console.log('Updated pet after unstaking:', updatedPet);
 
       setPets(prev => prev.map(pet =>
         pet.id === currentPet.id ? updatedPet : pet
