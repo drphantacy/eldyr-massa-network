@@ -95,6 +95,7 @@ export function createNewPet(petId: string): ElydrPet {
     stage: 'egg',
     path: 'undetermined',
     spriteType: 'dragon',
+    spriteId: 1,
     level: 1,
     growthPoints: 0,
     totalGrowthPoints: 0,
