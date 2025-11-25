@@ -108,6 +108,26 @@ export default function DashboardPage() {
     });
   };
 
+  // Show loader while checking blockchain on first connect
+  if (wallet.isConnected && !currentPet && isLoading) {
+    return (
+      <div className="min-h-screen py-12 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="bg-cosmic-900/50 border border-cosmic-700/50 rounded-2xl p-12 backdrop-blur-sm">
+            <div className="w-24 h-24 mx-auto mb-6 bg-cosmic-800 rounded-2xl flex items-center justify-center animate-pulse">
+              <span className="text-5xl">🔍</span>
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-4">Loading Your Elydrs...</h2>
+            <p className="text-cosmic-400 max-w-md mx-auto">
+              Checking blockchain for your pets...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show empty state only after loading is complete
   if (!wallet.isConnected || !currentPet) {
     return (
       <div className="min-h-screen py-12 px-4">

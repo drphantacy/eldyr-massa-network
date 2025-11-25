@@ -109,6 +109,8 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
     if (typeof window === 'undefined') return;
     if (pets.length > 0) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(pets));
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
     }
   }, [pets]);
 
