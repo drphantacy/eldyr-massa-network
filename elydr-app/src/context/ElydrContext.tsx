@@ -52,6 +52,7 @@ const SELECTED_PET_KEY = 'elydr-selected-pet';
 function deserializePet(pet: any): ElydrPet {
   return {
     ...pet,
+    stakedAmount: pet.stakedAmount ?? 0,
     nextCheckAt: new Date(pet.nextCheckAt),
     mintedAt: new Date(pet.mintedAt),
     history: pet.history.map((e: EvolutionEvent) => ({

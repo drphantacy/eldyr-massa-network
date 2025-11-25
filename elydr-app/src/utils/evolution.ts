@@ -106,6 +106,7 @@ export function createNewPet(petId: string): ElydrPet {
     power: 5,
     defense: 5,
     agility: 5,
+    stakedAmount: 0,
   };
 }
 
