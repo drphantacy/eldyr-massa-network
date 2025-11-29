@@ -16,6 +16,7 @@ import {
   stakeToPet as stakeToPetOnChain,
   unstakeFromPet as unstakeFromPetOnChain,
   releasePet as releasePetOnChain,
+  getEvolutionHistory,
 } from '@/lib/contract';
 
 interface ElydrContextType {
@@ -146,9 +147,20 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
         try {
           const onChainPet = await getPetFromChain(massaWallet.account, i);
           if (onChainPet.owner === massaWallet.address) {
-            console.log(`Loading pet #${i} - Raw stakedAmount (nanoMAS):`, onChainPet.stakedAmount);
             const convertedPet = onChainPetToElydrPet(onChainPet) as ElydrPet;
-            console.log(`Pet #${i} after conversion - stakedAmount (MAS):`, convertedPet.stakedAmount);
+
+            const evolutionHistory = await getEvolutionHistory(massaWallet.account, i);
+            if (evolutionHistory.length > 0) {
+              convertedPet.history = evolutionHistory.map(e => ({
+                timestamp: e.timestamp,
+                yieldPercent: e.yieldPercent,
+                growthPointsAwarded: e.growthPointsAwarded,
+                previousStage: e.previousStage as ElydrPet['stage'] || convertedPet.stage,
+                newStage: e.newStage as ElydrPet['stage'] || convertedPet.stage,
+                message: e.message,
+              }));
+            }
+
             loadedPets.push(convertedPet);
           }
         } catch (e) {
@@ -193,14 +205,63 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
   }, [massaWallet]);
 
   const refreshPetsFromChain = useCallback(async () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem(SELECTED_PET_KEY);
+    if (!massaWallet.account) return;
+
+    // Don't show loading spinner for background refresh - just update silently
+    try {
+      const totalSupply = await getTotalSupply(massaWallet.account);
+      const loadedPets: ElydrPet[] = [];
+      const now = Date.now();
+
+      for (let i = 1; i <= totalSupply; i++) {
+        try {
+          const onChainPet = await getPetFromChain(massaWallet.account, i);
+          if (onChainPet.owner === massaWallet.address) {
+            const convertedPet = onChainPetToElydrPet(onChainPet) as ElydrPet;
+
+            // If nextCheckAt is in the past, set it to 3 min from now
+            // This resets the timer after refresh
+            if (convertedPet.nextCheckAt.getTime() < now) {
+              convertedPet.nextCheckAt = new Date(now + 180000);
+            }
+
+            const evolutionHistory = await getEvolutionHistory(massaWallet.account, i);
+            if (evolutionHistory.length > 0) {
+              convertedPet.history = evolutionHistory.map(e => ({
+                timestamp: e.timestamp,
+                yieldPercent: e.yieldPercent,
+                growthPointsAwarded: e.growthPointsAwarded,
+                previousStage: e.previousStage as ElydrPet['stage'] || convertedPet.stage,
+                newStage: e.newStage as ElydrPet['stage'] || convertedPet.stage,
+                message: e.message,
+              }));
+            }
+
+            loadedPets.push(convertedPet);
+          }
+        } catch (e) {
+          // Silently skip pets that don't exist or can't be loaded
+        }
+      }
+
+      // Only update state if we got pets - don't clear existing pets on empty result
+      if (loadedPets.length > 0) {
+        setPets(loadedPets);
+        // Keep current selection if still valid, otherwise select first pet
+        setSelectedPetId(prev => {
+          const stillExists = loadedPets.some(p => p.id === prev);
+          return stillExists ? prev : loadedPets[0].id;
+        });
+        // Update localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(loadedPets));
+        }
+      }
+    } catch (err) {
+      console.error('Failed to refresh pets from chain:', err);
+      // Keep existing pets on error - don't clear
     }
-    setPets([]);
-    setSelectedPetId(null);
-    await loadPetsFromChainInternal();
-  }, []);
+  }, [massaWallet.account, massaWallet.address]);
 
   const selectPet = useCallback((petId: string) => {
     setSelectedPetId(petId);
@@ -264,7 +325,7 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
 
       setPets(prev => prev.map(pet =>
         pet.id === currentPet.id
-          ? { ...pet, linkedYieldSourceId: sourceId, nextCheckAt: new Date(Date.now() + 1800000) }
+          ? { ...pet, linkedYieldSourceId: sourceId, nextCheckAt: new Date(Date.now() + 180000) }
           : pet
       ));
     } catch (err) {
