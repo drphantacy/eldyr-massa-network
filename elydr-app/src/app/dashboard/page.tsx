@@ -88,7 +88,7 @@ export default function DashboardPage() {
         isOpen: true,
         type: 'warning',
         title: 'Insufficient Stake',
-        message: `You can only unstake up to ${(currentPet?.stakedAmount || 0).toFixed(2)} MAS`,
+        message: `You can only unstake up to ${(currentPet?.stakedAmount || 0).toFixed(3)} MAS`,
       });
       return;
     }
@@ -281,7 +281,7 @@ export default function DashboardPage() {
                 <h3 className="text-white font-bold">Staking</h3>
                 <div className="flex justify-between text-sm">
                   <span className="text-cosmic-400">Staked: </span>
-                  <span className="text-mythic-cyan font-bold ml-2">{(currentPet.stakedAmount || 0).toFixed(2)} MAS</span>
+                  <span className="text-mythic-cyan font-bold ml-2">{(currentPet.stakedAmount || 0).toFixed(3)} MAS</span>
                 </div>
               </div>
 
@@ -342,25 +342,25 @@ export default function DashboardPage() {
                     />
                     <div className="flex gap-2 text-xs">
                       <button
-                        onClick={() => setUnstakeAmount(((currentPet.stakedAmount || 0) * 0.25).toFixed(2))}
+                        onClick={() => setUnstakeAmount(((currentPet.stakedAmount || 0) * 0.25).toFixed(3))}
                         className="px-2 py-1 bg-cosmic-800 text-cosmic-400 rounded hover:text-white transition-colors"
                       >
                         25%
                       </button>
                       <button
-                        onClick={() => setUnstakeAmount(((currentPet.stakedAmount || 0) * 0.5).toFixed(2))}
+                        onClick={() => setUnstakeAmount(((currentPet.stakedAmount || 0) * 0.5).toFixed(3))}
                         className="px-2 py-1 bg-cosmic-800 text-cosmic-400 rounded hover:text-white transition-colors"
                       >
                         50%
                       </button>
                       <button
-                        onClick={() => setUnstakeAmount(((currentPet.stakedAmount || 0) * 0.75).toFixed(2))}
+                        onClick={() => setUnstakeAmount(((currentPet.stakedAmount || 0) * 0.75).toFixed(3))}
                         className="px-2 py-1 bg-cosmic-800 text-cosmic-400 rounded hover:text-white transition-colors"
                       >
                         75%
                       </button>
                       <button
-                        onClick={() => setUnstakeAmount((currentPet.stakedAmount || 0).toFixed(2))}
+                        onClick={() => setUnstakeAmount((currentPet.stakedAmount || 0).toFixed(3))}
                         className="px-2 py-1 bg-cosmic-800 text-cosmic-400 rounded hover:text-white transition-colors"
                       >
                         Max

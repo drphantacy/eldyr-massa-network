@@ -286,19 +286,31 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
       setPets(prev => [...prev, tempPet]);
       setSelectedPetId(expectedPetId);
 
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Poll until pet is confirmed on chain
+      const maxAttempts = 10;
+      const pollInterval = 2000;
+      let confirmed = false;
 
-      try {
-        const onChainPet = await getPetFromChain(massaWallet.account, Number(expectedPetId));
-        const realPet = onChainPetToElydrPet(onChainPet) as ElydrPet;
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+        try {
+          const onChainPet = await getPetFromChain(massaWallet.account, Number(expectedPetId));
+          const realPet = onChainPetToElydrPet(onChainPet) as ElydrPet;
 
-        setPets(prev => prev.map(pet =>
-          pet.id === expectedPetId ? realPet : pet
-        ));
+          setPets(prev => prev.map(pet =>
+            pet.id === expectedPetId ? realPet : pet
+          ));
 
-        setSelectedPetId(realPet.id);
-      } catch (fetchErr) {
-        console.log('Pet not yet queryable, using local data');
+          setSelectedPetId(realPet.id);
+          confirmed = true;
+          break;
+        } catch (fetchErr) {
+          console.log(`Waiting for pet confirmation (${attempt}/${maxAttempts})...`);
+        }
+      }
+
+      if (!confirmed) {
+        throw new Error('Pet minting timed out. Please refresh and check your pets.');
       }
 
       return expectedPetId;
@@ -364,7 +376,7 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
     try {
       await stakeToPetOnChain(massaWallet.account, Number(currentPet.id), amount);
 
-      const newStakedAmount = Math.round(((currentPet.stakedAmount || 0) + parseFloat(amount)) * 100) / 100;
+      const newStakedAmount = Math.round(((currentPet.stakedAmount || 0) + parseFloat(amount)) * 1000) / 1000;
       setPets(prev => prev.map(pet =>
         pet.id === currentPet.id ? { ...pet, stakedAmount: newStakedAmount } : pet
       ));
@@ -393,7 +405,7 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
       await unstakeFromPetOnChain(massaWallet.account, Number(currentPet.id), percentage);
 
       const unstakeAmount = (currentPet.stakedAmount || 0) * percentage / 100;
-      const newStakedAmount = Math.round(((currentPet.stakedAmount || 0) - unstakeAmount) * 100) / 100;
+      const newStakedAmount = Math.round(((currentPet.stakedAmount || 0) - unstakeAmount) * 1000) / 1000;
       setPets(prev => prev.map(pet =>
         pet.id === currentPet.id ? { ...pet, stakedAmount: newStakedAmount } : pet
       ));

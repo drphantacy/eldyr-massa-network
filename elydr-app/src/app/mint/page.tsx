@@ -27,9 +27,9 @@ export default function MintPage() {
   const [step, setStep] = useState<MintStep>('connect');
   const [selectedYieldSource, setSelectedYieldSource] = useState<string | null>(null);
   const [mintingState, setMintingState] = useState<'idle' | 'minting' | 'success'>('idle');
-  const [mintingNewEgg, setMintingNewEgg] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
   const [isRefreshingEvolution, setIsRefreshingEvolution] = useState(false);
+  const [justMintedPetId, setJustMintedPetId] = useState<string | null>(null);
 
   const handleEvolutionComplete = useCallback(async () => {
     setIsRefreshingEvolution(true);
@@ -40,17 +40,31 @@ export default function MintPage() {
     }
   }, [refreshPetsFromChain]);
 
+  const justMintedPet = justMintedPetId ? pets.find(p => p.id === justMintedPetId) : null;
+
+  // Determine which pet to show in link/complete steps
+  const activePet = justMintedPet || (currentPet && !currentPet.linkedYieldSourceId ? currentPet : null);
+
   useEffect(() => {
     if (!wallet.isConnected) {
       setStep('connect');
-    } else if (mintingNewEgg || !currentPet) {
-      setStep('mint');
-    } else if (!currentPet.linkedYieldSourceId) {
+    } else if (justMintedPetId) {
+      // User just minted in this session
+      if (justMintedPet && !justMintedPet.linkedYieldSourceId) {
+        setStep('link');
+      } else if (justMintedPet && justMintedPet.linkedYieldSourceId) {
+        setStep('complete');
+      } else {
+        setStep('mint');
+      }
+    } else if (currentPet && !currentPet.linkedYieldSourceId) {
+      // Has an existing pet without linked yield source
       setStep('link');
     } else {
-      setStep('complete');
+      // All pets linked or no pets - show mint
+      setStep('mint');
     }
-  }, [wallet.isConnected, currentPet, mintingNewEgg]);
+  }, [wallet.isConnected, justMintedPetId, justMintedPet, currentPet]);
 
   const handleConnect = () => {
     connectWallet();
@@ -59,9 +73,9 @@ export default function MintPage() {
   const handleMint = async () => {
     setMintingState('minting');
     try {
-      await mintPet();
+      const petId = await mintPet();
+      setJustMintedPetId(petId);
       setMintingState('success');
-      setMintingNewEgg(false);
     } catch (error) {
       console.error('Mint error:', error);
       setMintingState('idle');
@@ -69,8 +83,9 @@ export default function MintPage() {
   };
 
   const handleMintAnother = () => {
-    setMintingNewEgg(true);
+    setJustMintedPetId(null);
     setMintingState('idle');
+    setSelectedYieldSource(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -168,6 +183,7 @@ export default function MintPage() {
                 <div>
                   <div className="w-16 h-16 mx-auto mb-4 border-4 border-mythic-purple border-t-transparent rounded-full animate-spin" />
                   <p className="text-cosmic-300">Minting your Eldyr...</p>
+                  <p className="text-cosmic-500 text-sm mt-2">Waiting for chain confirmation</p>
                 </div>
               ) : mintingState === 'success' ? (
                 <div>
@@ -197,7 +213,7 @@ export default function MintPage() {
             </div>
           )}
 
-          {step === 'link' && currentPet && (
+          {step === 'link' && activePet && (
             <div>
               <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold text-white mb-2">Link a Yield Source</h2>
@@ -207,7 +223,7 @@ export default function MintPage() {
               </div>
 
               <div className="max-w-xs mx-auto mb-8">
-                <PetCard pet={currentPet} showStats={false} />
+                <PetCard pet={activePet} showStats={false} />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
@@ -240,7 +256,7 @@ export default function MintPage() {
             </div>
           )}
 
-          {step === 'complete' && currentPet && (
+          {step === 'complete' && justMintedPet && (
             <div className="text-center">
               <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-green-400 to-emerald-600 rounded-2xl flex items-center justify-center animate-glow">
                 <span className="text-5xl">✨</span>
@@ -252,14 +268,14 @@ export default function MintPage() {
 
               <div className="max-w-sm mx-auto mb-8">
                 <PetCard
-                  pet={currentPet}
-                  yieldSource={yieldSources.find((s) => s.id === currentPet.linkedYieldSourceId)}
+                  pet={justMintedPet}
+                  yieldSource={yieldSources.find((s) => s.id === justMintedPet.linkedYieldSourceId)}
                 />
               </div>
 
               <div className="flex justify-center mb-8">
                 <CountdownTimer
-                  targetDate={currentPet.nextCheckAt}
+                  targetDate={justMintedPet.nextCheckAt}
                   label="Next evolution check"
                   onComplete={handleEvolutionComplete}
                   isRefreshing={isRefreshingEvolution}

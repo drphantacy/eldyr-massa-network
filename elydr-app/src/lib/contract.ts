@@ -196,7 +196,7 @@ export function onChainPetToElydrPet(pet: OnChainPet): {
     power: pet.power,
     defense: pet.defense,
     agility: pet.agility,
-    stakedAmount: Math.round((Number(pet.stakedAmount) / 1e9) * 100) / 100,
+    stakedAmount: Math.round((Number(pet.stakedAmount) / 1e9) * 1000) / 1000,
   };
 }
 
