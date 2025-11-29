@@ -16,6 +16,7 @@ import {
 const OWNER_KEY = stringToBytes("OWNER");
 const TOTAL_SUPPLY_KEY = stringToBytes("TOTAL_SUPPLY");
 const MINT_PRICE_KEY = stringToBytes("MINT_PRICE");
+const EVOLUTION_CONTRACT_KEY = stringToBytes("EVOLUTION_CONTRACT");
 const PET_PREFIX = stringToBytes("PET_");
 const OWNER_OF_PREFIX = stringToBytes("OWNER_OF_");
 const BALANCE_OF_PREFIX = stringToBytes("BALANCE_OF_");
@@ -127,6 +128,26 @@ export function constructor(_: StaticArray<u8>): void {
   generateEvent("ElydrNFT contract deployed by " + owner);
 }
 
+export function setEvolutionContract(args: StaticArray<u8>): void {
+  const owner = bytesToString(Storage.get(OWNER_KEY));
+  const caller = Context.caller().toString();
+  assert(caller == owner, "Only owner can set evolution contract");
+
+  const parsedArgs = new Args(args);
+  const evolutionContractAddress = parsedArgs.nextString().expect("Failed to parse evolution contract address");
+
+  Storage.set(EVOLUTION_CONTRACT_KEY, stringToBytes(evolutionContractAddress));
+
+  generateEvent("Evolution contract set to: " + evolutionContractAddress);
+}
+
+export function getEvolutionContract(_: StaticArray<u8>): StaticArray<u8> {
+  if (!Storage.has(EVOLUTION_CONTRACT_KEY)) {
+    return stringToBytes("");
+  }
+  return Storage.get(EVOLUTION_CONTRACT_KEY);
+}
+
 export function mint(_: StaticArray<u8>): StaticArray<u8> {
   const caller = Context.caller().toString();
   const mintPrice = bytesToU64(Storage.get(MINT_PRICE_KEY));
@@ -178,6 +199,16 @@ export function getPet(args: StaticArray<u8>): StaticArray<u8> {
   assert(Storage.has(petKey), "Pet does not exist");
 
   return Storage.get(petKey);
+}
+
+export function petExists(args: StaticArray<u8>): StaticArray<u8> {
+  const parsedArgs = new Args(args);
+  const petId = parsedArgs.nextU64().expect("Failed to parse petId");
+
+  const petKey = getPetKey(petId);
+  const exists: u8 = Storage.has(petKey) ? 1 : 0;
+
+  return new Args().add(exists).serialize();
 }
 
 export function ownerOf(args: StaticArray<u8>): StaticArray<u8> {
@@ -242,7 +273,14 @@ export function updatePet(args: StaticArray<u8>): void {
 
   const owner = bytesToString(Storage.get(OWNER_KEY));
   const caller = Context.caller().toString();
-  assert(caller == owner, "Only contract owner can update pets");
+
+  // Allow updates from owner OR evolution contract
+  let isAuthorized = caller == owner;
+  if (!isAuthorized && Storage.has(EVOLUTION_CONTRACT_KEY)) {
+    const evolutionContract = bytesToString(Storage.get(EVOLUTION_CONTRACT_KEY));
+    isAuthorized = caller == evolutionContract;
+  }
+  assert(isAuthorized, "Only contract owner or evolution contract can update pets");
 
   const petKey = getPetKey(petId);
   assert(Storage.has(petKey), "Pet does not exist");

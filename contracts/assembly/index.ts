@@ -2,6 +2,7 @@ export {
   constructor,
   mint,
   getPet,
+  petExists,
   ownerOf,
   balanceOf,
   totalSupply,
@@ -11,6 +12,8 @@ export {
   stake,
   unstake,
   release,
+  setEvolutionContract,
+  getEvolutionContract,
 } from "./elydrNFT";
 
 export {
@@ -18,7 +21,6 @@ export {
   registerYieldSource,
   updateYieldSourceApy,
   getYieldSource,
-  processEvolution,
   autonomousEvolutionCheck,
   evolvePet,
   setEvolutionInterval,

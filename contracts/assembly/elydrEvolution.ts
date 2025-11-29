@@ -4,6 +4,8 @@ import {
   generateEvent,
   deferredCallRegister,
   Slot,
+  call,
+  Address,
 } from "@massalabs/massa-as-sdk";
 import {
   Args,
@@ -16,8 +18,8 @@ import { ElydrPet, STAGES, PATHS } from "./elydrNFT";
 
 const NFT_CONTRACT_KEY = stringToBytes("NFT_CONTRACT");
 const EVOLUTION_INTERVAL_KEY = stringToBytes("EVOLUTION_INTERVAL");
-const PENDING_CHECKS_KEY = stringToBytes("PENDING_CHECKS");
 const YIELD_SOURCE_PREFIX = stringToBytes("YIELD_SOURCE_");
+const OWNER_KEY = stringToBytes("EVOLUTION_OWNER");
 
 const STAGE_THRESHOLDS: u64[] = [0, 10, 30, 70, 150];
 
@@ -33,26 +35,28 @@ function getYieldSourceKey(sourceId: string): StaticArray<u8> {
   return new Args().add(YIELD_SOURCE_PREFIX).add(sourceId).serialize();
 }
 
-function getPetKey(petId: u64): StaticArray<u8> {
-  return new Args().add(stringToBytes("PET_")).add(petId).serialize();
-}
-
 export function constructorEvolution(args: StaticArray<u8>): void {
-  assert(Context.isDeployingContract(), "Already deployed");
+  assert(!Storage.has(NFT_CONTRACT_KEY), "Evolution already initialized");
 
   const parsedArgs = new Args(args);
   const nftContractAddress = parsedArgs.nextString().expect("Failed to parse NFT contract address");
 
+  const owner = Context.caller().toString();
+  Storage.set(OWNER_KEY, stringToBytes(owner));
   Storage.set(NFT_CONTRACT_KEY, stringToBytes(nftContractAddress));
   Storage.set(EVOLUTION_INTERVAL_KEY, u64ToBytes(1800000));
-  Storage.set(PENDING_CHECKS_KEY, u64ToBytes(0));
 
-  generateEvent("ElydrEvolution contract deployed, linked to NFT contract: " + nftContractAddress);
+  generateEvent("ElydrEvolution initialized by " + owner + ", linked to NFT contract: " + nftContractAddress);
 
   scheduleNextCheck();
 }
 
 export function registerYieldSource(args: StaticArray<u8>): void {
+  assert(Storage.has(OWNER_KEY), "Evolution not initialized");
+  const owner = bytesToString(Storage.get(OWNER_KEY));
+  const caller = Context.caller().toString();
+  assert(caller == owner, "Only owner can register yield sources");
+
   const parsedArgs = new Args(args);
   const sourceId = parsedArgs.nextString().expect("Failed to parse sourceId");
   const name = parsedArgs.nextString().expect("Failed to parse name");
@@ -71,6 +75,11 @@ export function registerYieldSource(args: StaticArray<u8>): void {
 }
 
 export function updateYieldSourceApy(args: StaticArray<u8>): void {
+  assert(Storage.has(OWNER_KEY), "Evolution not initialized");
+  const owner = bytesToString(Storage.get(OWNER_KEY));
+  const caller = Context.caller().toString();
+  assert(caller == owner, "Only owner can update yield source APY");
+
   const parsedArgs = new Args(args);
   const sourceId = parsedArgs.nextString().expect("Failed to parse sourceId");
   const newApy = parsedArgs.nextU8().expect("Failed to parse newApy");
@@ -132,46 +141,7 @@ function determinePath(checkCount: u64, avgPoints: u64): u8 {
   return 1;
 }
 
-export function processEvolution(args: StaticArray<u8>): void {
-  const parsedArgs = new Args(args);
-  const petId = parsedArgs.nextU64().expect("Failed to parse petId");
-
-  generateEvent("Processing evolution for Pet #" + petId.toString());
-  scheduleNextCheck();
-}
-
-export function autonomousEvolutionCheck(_: StaticArray<u8>): void {
-  const currentTime = Context.timestamp();
-  generateEvent("Autonomous evolution check triggered at: " + currentTime.toString());
-  scheduleNextCheck();
-}
-
-function scheduleNextCheck(): void {
-  const currentPeriod = Context.currentPeriod();
-  const periodsToWait: u64 = 112;
-  const nextPeriod = currentPeriod + periodsToWait;
-  const selfAddress = Context.callee().toString();
-
-  const callId = deferredCallRegister(
-    selfAddress,
-    "autonomousEvolutionCheck",
-    new Slot(nextPeriod, 0),
-    10_000_000,
-    new Args().serialize(),
-    0
-  );
-
-  generateEvent("Next autonomous check scheduled. Call ID: " + callId + " at period: " + nextPeriod.toString());
-}
-
-export function evolvePet(args: StaticArray<u8>): StaticArray<u8> {
-  const parsedArgs = new Args(args);
-  const petId = parsedArgs.nextU64().expect("Failed to parse petId");
-  const currentApy = parsedArgs.nextU8().expect("Failed to parse currentApy");
-  const petData = parsedArgs.nextBytes().expect("Failed to parse petData");
-
-  const pet = ElydrPet.deserialize(petData);
-
+function evolvePetInternal(petId: u64, currentApy: u8, pet: ElydrPet): StaticArray<u8> {
   const pointsAwarded = calculateGrowthPoints(currentApy);
   const newTotalPoints = pet.totalGrowthPoints + pointsAwarded;
   const newCheckCount = pet.checkCount + 1;
@@ -211,7 +181,135 @@ export function evolvePet(args: StaticArray<u8>): StaticArray<u8> {
   return pet.serialize();
 }
 
+export function autonomousEvolutionCheck(_: StaticArray<u8>): void {
+  const currentTime = Context.timestamp();
+  generateEvent("Autonomous evolution check triggered at: " + currentTime.toString());
+
+  // Get NFT contract address
+  if (!Storage.has(NFT_CONTRACT_KEY)) {
+    generateEvent("ERROR: NFT contract address not set");
+    scheduleNextCheck();
+    return;
+  }
+
+  const nftContractAddress = bytesToString(Storage.get(NFT_CONTRACT_KEY));
+  const nftAddress = new Address(nftContractAddress);
+
+  // Get total supply of pets
+  const totalSupplyResult = call(nftAddress, "totalSupply", new Args(), 0);
+  const totalSupply = bytesToU64(totalSupplyResult);
+
+  if (totalSupply == 0) {
+    generateEvent("No pets to evolve");
+    scheduleNextCheck();
+    return;
+  }
+
+  generateEvent("Processing evolution for " + totalSupply.toString() + " pets");
+
+  let petsEvolved: u64 = 0;
+  let petsSkipped: u64 = 0;
+
+  // Process each pet
+  for (let petId: u64 = 1; petId <= totalSupply; petId++) {
+    const petIdArgs = new Args().add(petId);
+
+    // Check if pet exists (might have been released)
+    const existsResult = call(nftAddress, "petExists", petIdArgs, 0);
+    const existsArgs = new Args(existsResult);
+    const exists = existsArgs.nextU8().expect("Failed to parse exists");
+
+    if (exists == 0) {
+      petsSkipped++;
+      continue;
+    }
+
+    // Get pet data from NFT contract
+    const petData = call(nftAddress, "getPet", new Args().add(petId), 0);
+    const pet = ElydrPet.deserialize(petData);
+
+    // Skip if no yield source linked
+    if (pet.linkedYieldSourceId == "") {
+      petsSkipped++;
+      continue;
+    }
+
+    // Get yield source APY
+    const yieldSourceKey = getYieldSourceKey(pet.linkedYieldSourceId);
+    if (!Storage.has(yieldSourceKey)) {
+      // Yield source not registered, skip
+      petsSkipped++;
+      continue;
+    }
+
+    const yieldSourceData = new Args(Storage.get(yieldSourceKey));
+    yieldSourceData.nextString(); // sourceId
+    yieldSourceData.nextString(); // name
+    const currentApy = yieldSourceData.nextU8().expect("Failed to read APY");
+
+    // Calculate evolution using existing logic
+    const evolvedPetData = evolvePetInternal(petId, currentApy, pet);
+    const evolvedPet = ElydrPet.deserialize(evolvedPetData);
+
+    // Update pet in NFT contract
+    const updateArgs = new Args()
+      .add(petId)
+      .add(evolvedPet.stage)
+      .add(evolvedPet.path)
+      .add(evolvedPet.level)
+      .add(evolvedPet.growthPoints)
+      .add(evolvedPet.totalGrowthPoints)
+      .add(evolvedPet.power)
+      .add(evolvedPet.defense)
+      .add(evolvedPet.agility)
+      .add(evolvedPet.checkCount);
+
+    call(nftAddress, "updatePet", updateArgs, 0);
+    petsEvolved++;
+  }
+
+  generateEvent(
+    "Evolution check complete. Evolved: " + petsEvolved.toString() +
+    ", Skipped: " + petsSkipped.toString()
+  );
+
+  scheduleNextCheck();
+}
+
+function scheduleNextCheck(): void {
+  const currentPeriod = Context.currentPeriod();
+  const periodsToWait: u64 = 11; // ~3 minutes (11 periods * ~16s per period)
+  const nextPeriod = currentPeriod + periodsToWait;
+  const selfAddress = Context.callee().toString();
+
+  const callId = deferredCallRegister(
+    selfAddress,
+    "autonomousEvolutionCheck",
+    new Slot(nextPeriod, 0),
+    100_000_000,
+    new Args().serialize(),
+    0
+  );
+
+  generateEvent("Next autonomous check scheduled. Call ID: " + callId + " at period: " + nextPeriod.toString());
+}
+
+export function evolvePet(args: StaticArray<u8>): StaticArray<u8> {
+  const parsedArgs = new Args(args);
+  const petId = parsedArgs.nextU64().expect("Failed to parse petId");
+  const currentApy = parsedArgs.nextU8().expect("Failed to parse currentApy");
+  const petData = parsedArgs.nextBytes().expect("Failed to parse petData");
+
+  const pet = ElydrPet.deserialize(petData);
+  return evolvePetInternal(petId, currentApy, pet);
+}
+
 export function setEvolutionInterval(args: StaticArray<u8>): void {
+  assert(Storage.has(OWNER_KEY), "Evolution not initialized");
+  const owner = bytesToString(Storage.get(OWNER_KEY));
+  const caller = Context.caller().toString();
+  assert(caller == owner, "Only owner can set evolution interval");
+
   const parsedArgs = new Args(args);
   const newInterval = parsedArgs.nextU64().expect("Failed to parse interval");
 
