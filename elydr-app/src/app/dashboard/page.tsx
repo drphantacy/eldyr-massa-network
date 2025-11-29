@@ -18,7 +18,7 @@ type ModalState = {
 };
 
 export default function DashboardPage() {
-  const { wallet, pets, currentPet, selectedPetId, selectPet, yieldSources, simulateEvolution, stakeToPet, unstakeFromPet, releasePet, refreshPetsFromChain, error, isLoading, isLoadingPets } = useElydr();
+  const { wallet, pets, currentPet, selectedPetId, selectPet, yieldSources, stakeToPet, unstakeFromPet, releasePet, refreshPetsFromChain, error, isLoading, isLoadingPets } = useElydr();
   const [activeTab, setActiveTab] = useState<TabType>('summary');
   const [stakingTab, setStakingTab] = useState<'stake' | 'unstake'>('stake');
   const [stakeAmount, setStakeAmount] = useState('');
@@ -209,28 +209,9 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-            <p className="text-cosmic-400">Monitor your Eldyr&apos;s growth and evolution</p>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <div className="bg-cosmic-900/50 border border-cosmic-700/50 rounded-xl px-6 py-3 backdrop-blur-sm">
-              <CountdownTimer
-                targetDate={currentPet.nextCheckAt}
-                label="Next autonomous check"
-                onComplete={handleEvolutionComplete}
-                isRefreshing={isRefreshingEvolution}
-              />
-            </div>
-            <button
-              onClick={simulateEvolution}
-              className="px-6 py-2 bg-gradient-to-r from-mythic-purple to-mythic-cyan text-white font-medium rounded-xl hover:opacity-90 transition-opacity text-sm"
-            >
-              Simulate Autonomous Growth
-            </button>
-          </div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white">Dashboard</h1>
+          <p className="text-cosmic-400">Monitor your Eldyr&apos;s growth and evolution</p>
         </div>
 
         {error &&
@@ -418,27 +399,37 @@ export default function DashboardPage() {
           </div>
 
           <div className="lg:col-span-2 space-y-6">
-            <div className="flex gap-2">
-              <button
-                onClick={() => setActiveTab('summary')}
-                className={`px-6 py-2 rounded-lg font-medium transition-all ${
-                  activeTab === 'summary'
-                    ? 'bg-mythic-purple text-white'
-                    : 'bg-cosmic-800 text-cosmic-400 hover:text-white'
-                }`}
-              >
-                Summary
-              </button>
-              <button
-                onClick={() => setActiveTab('details')}
-                className={`px-6 py-2 rounded-lg font-medium transition-all ${
-                  activeTab === 'details'
-                    ? 'bg-mythic-purple text-white'
-                    : 'bg-cosmic-800 text-cosmic-400 hover:text-white'
-                }`}
-              >
-                Details
-              </button>
+            <div className="flex items-center justify-between">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setActiveTab('summary')}
+                  className={`px-6 py-2 rounded-lg font-medium transition-all ${
+                    activeTab === 'summary'
+                      ? 'bg-mythic-purple text-white'
+                      : 'bg-cosmic-800 text-cosmic-400 hover:text-white'
+                  }`}
+                >
+                  Summary
+                </button>
+                <button
+                  onClick={() => setActiveTab('details')}
+                  className={`px-6 py-2 rounded-lg font-medium transition-all ${
+                    activeTab === 'details'
+                      ? 'bg-mythic-purple text-white'
+                      : 'bg-cosmic-800 text-cosmic-400 hover:text-white'
+                  }`}
+                >
+                  Details
+                </button>
+              </div>
+              <div className="bg-cosmic-900/50 border border-cosmic-700/50 rounded-xl px-4 py-2 backdrop-blur-sm">
+                <CountdownTimer
+                  targetDate={currentPet.nextCheckAt}
+                  label="Next check"
+                  onComplete={handleEvolutionComplete}
+                  isRefreshing={isRefreshingEvolution}
+                />
+              </div>
             </div>
 
             {activeTab === 'summary' && (

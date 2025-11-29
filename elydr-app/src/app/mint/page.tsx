@@ -155,9 +155,13 @@ export default function MintPage() {
                 Each Eldyr egg is unique. What creature hatches depends on how you nurture it with yield!
               </p>
 
-              <div className="inline-block bg-cosmic-800/50 rounded-lg px-4 py-2 mb-8">
+              <div className="inline-block bg-cosmic-800/50 rounded-lg px-4 py-2 mb-8 group cursor-pointer text-center">
                 <span className="text-cosmic-400 text-sm">Connected: </span>
-                <span className="text-white font-mono">{wallet.address}</span>
+                <span className="text-white font-mono text-sm relative">
+                  <span className="invisible">{wallet.address}</span>
+                  <span className="absolute inset-0 group-hover:opacity-0">{wallet.address?.slice(0, 24)}<span className="tracking-widest">xxxxxx</span>{wallet.address?.slice(30)}</span>
+                  <span className="absolute inset-0 opacity-0 group-hover:opacity-100">{wallet.address}</span>
+                </span>
               </div>
 
               {mintingState === 'minting' ? (
