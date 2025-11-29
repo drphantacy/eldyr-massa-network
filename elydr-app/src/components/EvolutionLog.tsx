@@ -1,17 +1,35 @@
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
 import { EvolutionEvent } from '@/types';
 
 interface EvolutionLogProps {
   events: EvolutionEvent[];
-  maxEvents?: number;
+  initialLimit?: number;
 }
 
-export function EvolutionLog({ events, maxEvents }: EvolutionLogProps) {
-  const displayEvents = maxEvents ? events.slice(0, maxEvents) : events;
+export function EvolutionLog({ events, initialLimit = 5 }: EvolutionLogProps) {
+  const [displayCount, setDisplayCount] = useState(initialLimit);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const displayEvents = events.slice(0, displayCount);
+  const hasMore = events.length > displayCount;
+
+  const loadMore = () => {
+    setDisplayCount(prev => Math.min(prev + 5, events.length));
+  };
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [displayCount]);
 
   const formatTime = (date: Date) => {
-    return new Date(date).toLocaleTimeString('en-US', {
+    const d = new Date(date);
+    return d.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -46,7 +64,7 @@ export function EvolutionLog({ events, maxEvents }: EvolutionLogProps) {
         <p className="text-cosmic-400 text-xs">Autonomous contract execution history</p>
       </div>
 
-      <div className="divide-y divide-cosmic-800/50 max-h-[600px] overflow-y-auto">
+      <div ref={scrollRef} className="divide-y divide-cosmic-800/50 max-h-[400px] overflow-y-auto">
         {displayEvents.length === 0 ? (
           <div className="px-4 py-8 text-center">
             <div className="text-cosmic-500 text-sm">No evolution events yet</div>
@@ -102,10 +120,20 @@ export function EvolutionLog({ events, maxEvents }: EvolutionLogProps) {
         )}
       </div>
 
-      {maxEvents && events.length > maxEvents && (
+      {hasMore && (
+        <div className="px-4 py-3 border-t border-cosmic-700/50 text-center">
+          <button
+            onClick={loadMore}
+            className="px-4 py-2 bg-cosmic-800 hover:bg-cosmic-700 text-cosmic-300 hover:text-white text-sm rounded-lg transition-colors"
+          >
+            Load More ({events.length - displayCount} remaining)
+          </button>
+        </div>
+      )}
+      {!hasMore && events.length > initialLimit && (
         <div className="px-4 py-2 border-t border-cosmic-700/50 text-center">
           <span className="text-cosmic-500 text-xs">
-            Showing {maxEvents} of {events.length} events
+            Showing all {events.length} events
           </span>
         </div>
       )}
