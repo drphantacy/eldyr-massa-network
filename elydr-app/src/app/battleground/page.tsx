@@ -31,7 +31,7 @@ export default function BattlegroundPage() {
             Battleground
           </h1>
           <p className="text-cosmic-400 max-w-2xl mx-auto">
-            Enter tournaments to test your Elydr&apos;s strength. Compete against other players
+            Enter tournaments to test your Eldyr&apos;s strength. Compete against other players
             and climb the global leaderboard!
           </p>
         </div>
@@ -80,7 +80,7 @@ export default function BattlegroundPage() {
             <p className="text-cosmic-400">
               {!wallet.isConnected
                 ? 'Connect your wallet to enter tournaments'
-                : 'Mint an Elydr to participate in battles'}
+                : 'Mint an Eldyr to participate in battles'}
             </p>
           </div>
         )}
@@ -178,7 +178,7 @@ export default function BattlegroundPage() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-white">Global Leaderboard</h2>
-              <span className="text-cosmic-500 text-sm">Top 10 Elydrs</span>
+              <span className="text-cosmic-500 text-sm">Top 10 Eldyrs</span>
             </div>
             <LeaderboardTable entries={leaderboard} />
           </div>

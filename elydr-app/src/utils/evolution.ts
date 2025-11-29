@@ -9,7 +9,7 @@ import {
 } from '@/types';
 
 const STAGES: ElydrStage[] = ['egg', 'hatchling', 'young', 'mature', 'elder'];
-const EVOLUTION_INTERVAL = 1800000;
+const EVOLUTION_INTERVAL = 180000; // 3 minutes for testing
 
 export function getNextStage(current: ElydrStage, points: number): ElydrStage {
   const currentIndex = STAGES.indexOf(current);
@@ -91,7 +91,7 @@ export function processEvolution(
 export function createNewPet(petId: string): ElydrPet {
   return {
     id: petId,
-    name: `Elydr #${petId}`,
+    name: `Eldyr #${petId}`,
     stage: 'egg',
     path: 'undetermined',
     spriteType: 'dragon',

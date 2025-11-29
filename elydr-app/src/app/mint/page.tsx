@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useElydr } from '@/context/ElydrContext';
 import { CountdownTimer, YieldSourceCard, PetCard, StepIndicator } from '@/components';
@@ -17,6 +17,7 @@ export default function MintPage() {
     currentPet,
     mintPet,
     linkYieldSource,
+    refreshPetsFromChain,
     yieldSources,
     isLoading,
     contractAddress,
@@ -28,6 +29,16 @@ export default function MintPage() {
   const [mintingState, setMintingState] = useState<'idle' | 'minting' | 'success'>('idle');
   const [mintingNewEgg, setMintingNewEgg] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
+  const [isRefreshingEvolution, setIsRefreshingEvolution] = useState(false);
+
+  const handleEvolutionComplete = useCallback(async () => {
+    setIsRefreshingEvolution(true);
+    try {
+      await refreshPetsFromChain();
+    } finally {
+      setIsRefreshingEvolution(false);
+    }
+  }, [refreshPetsFromChain]);
 
   useEffect(() => {
     if (!wallet.isConnected) {
@@ -98,9 +109,9 @@ export default function MintPage() {
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">Mint Your Elydr</h1>
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">Mint Your Eldyr</h1>
           <p className="text-cosmic-400 max-w-lg mx-auto">
-            Create your own mythical pet on Massa. Each Elydr starts as an egg, ready to evolve
+            Create your own mythical pet on Massa. Each Eldyr starts as an egg, ready to evolve
             based on your DeFi yield.
           </p>
         </div>
@@ -119,7 +130,7 @@ export default function MintPage() {
               </div>
               <h2 className="text-2xl font-bold text-white mb-2">Connect Your Wallet</h2>
               <p className="text-cosmic-400 mb-8 max-w-md mx-auto">
-                Connect your Massa wallet to start minting your Elydr.
+                Connect your Massa wallet to start minting your Eldyr.
               </p>
               <button
                 onClick={handleConnect}
@@ -139,9 +150,9 @@ export default function MintPage() {
               <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center animate-float">
                 <span className="text-5xl">🥚</span>
               </div>
-              <h2 className="text-2xl font-bold text-white mb-2">Mint Your Elydr Egg</h2>
+              <h2 className="text-2xl font-bold text-white mb-2">Mint Your Eldyr Egg</h2>
               <p className="text-cosmic-400 mb-4 max-w-md mx-auto">
-                Each Elydr egg is unique. What creature hatches depends on how you nurture it with yield!
+                Each Eldyr egg is unique. What creature hatches depends on how you nurture it with yield!
               </p>
 
               <div className="inline-block bg-cosmic-800/50 rounded-lg px-4 py-2 mb-8">
@@ -152,7 +163,7 @@ export default function MintPage() {
               {mintingState === 'minting' ? (
                 <div>
                   <div className="w-16 h-16 mx-auto mb-4 border-4 border-mythic-purple border-t-transparent rounded-full animate-spin" />
-                  <p className="text-cosmic-300">Minting your Elydr...</p>
+                  <p className="text-cosmic-300">Minting your Eldyr...</p>
                 </div>
               ) : mintingState === 'success' ? (
                 <div>
@@ -187,7 +198,7 @@ export default function MintPage() {
               <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold text-white mb-2">Link a Yield Source</h2>
                 <p className="text-cosmic-400 max-w-md mx-auto">
-                  Your Elydr feeds on DeFi yield. Higher and more consistent APY leads to mythic evolutions!
+                  Your Eldyr feeds on DeFi yield. Higher and more consistent APY leads to mythic evolutions!
                 </p>
               </div>
 
@@ -230,9 +241,9 @@ export default function MintPage() {
               <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-green-400 to-emerald-600 rounded-2xl flex items-center justify-center animate-glow">
                 <span className="text-5xl">✨</span>
               </div>
-              <h2 className="text-2xl font-bold text-white mb-2">Your Elydr is Ready!</h2>
+              <h2 className="text-2xl font-bold text-white mb-2">Your Eldyr is Ready!</h2>
               <p className="text-cosmic-400 mb-8 max-w-md mx-auto">
-                Your Elydr egg is now linked to a yield source. The autonomous contracts will check every 30 minutes to award growth points.
+                Your Eldyr egg is now linked to a yield source. The autonomous contracts will check every 3 minutes to award growth points.
               </p>
 
               <div className="max-w-sm mx-auto mb-8">
@@ -243,7 +254,12 @@ export default function MintPage() {
               </div>
 
               <div className="flex justify-center mb-8">
-                <CountdownTimer targetDate={currentPet.nextCheckAt} label="Next evolution check" />
+                <CountdownTimer
+                  targetDate={currentPet.nextCheckAt}
+                  label="Next evolution check"
+                  onComplete={handleEvolutionComplete}
+                  isRefreshing={isRefreshingEvolution}
+                />
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -263,7 +279,7 @@ export default function MintPage() {
 
               {pets.length > 1 && (
                 <p className="text-cosmic-400 text-sm mt-4">
-                  You have {pets.length} Elydrs in your collection
+                  You have {pets.length} Eldyrs in your collection
                 </p>
               )}
             </div>
@@ -274,9 +290,9 @@ export default function MintPage() {
           <h3 className="text-white font-bold mb-2">How It Works</h3>
           <ul className="text-cosmic-400 text-sm space-y-1">
             <li>• Connect your Massa wallet (MassaStation, Bearby, or MetaMask Snap)</li>
-            <li>• Mint an Elydr egg NFT on the Massa blockchain</li>
+            <li>• Mint an Eldyr egg NFT on the Massa blockchain</li>
             <li>• Link a DeFi yield source to fuel your pet&apos;s evolution</li>
-            <li>• Autonomous smart contracts check yield every 30 minutes</li>
+            <li>• Autonomous smart contracts check yield every 3 minutes</li>
           </ul>
 
           <div className="mt-4 pt-4 border-t border-cosmic-700/30">

@@ -102,7 +102,7 @@ export const mockEvolutionHistory: EvolutionEvent[] = [
 
 export const createMockPet = (id: string = '1234'): ElydrPet => ({
   id,
-  name: `Elydr #${id}`,
+  name: `Eldyr #${id}`,
   stage: 'hatchling',
   path: 'undetermined',
   spriteType: 'dragon',
@@ -110,7 +110,7 @@ export const createMockPet = (id: string = '1234'): ElydrPet => ({
   level: 2,
   growthPoints: 17,
   totalGrowthPoints: 17,
-  nextCheckAt: new Date(Date.now() + 1800000),
+  nextCheckAt: new Date(Date.now() + 180000),
   linkedYieldSourceId: 'yield-1',
   mintedAt: new Date(Date.now() - 3600000 * 4),
   history: mockEvolutionHistory,

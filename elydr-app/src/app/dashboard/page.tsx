@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useElydr } from '@/context/ElydrContext';
 import { PetCard, CountdownTimer, EvolutionLog, YieldSourceCard, Modal } from '@/components';
@@ -23,12 +23,22 @@ export default function DashboardPage() {
   const [stakingTab, setStakingTab] = useState<'stake' | 'unstake'>('stake');
   const [stakeAmount, setStakeAmount] = useState('');
   const [unstakeAmount, setUnstakeAmount] = useState('');
+  const [isRefreshingEvolution, setIsRefreshingEvolution] = useState(false);
   const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
     type: 'info',
     title: '',
     message: '',
   });
+
+  const handleEvolutionComplete = useCallback(async () => {
+    setIsRefreshingEvolution(true);
+    try {
+      await refreshPetsFromChain();
+    } finally {
+      setIsRefreshingEvolution(false);
+    }
+  }, [refreshPetsFromChain]);
 
   const linkedYieldSource = yieldSources.find(
     (s) => s.id === currentPet?.linkedYieldSourceId
@@ -55,7 +65,7 @@ export default function DashboardPage() {
         isOpen: true,
         type: 'success',
         title: 'Stake Successful!',
-        message: `Successfully staked ${stakeAmount} MAS to your Elydr.`,
+        message: `Successfully staked ${stakeAmount} MAS to your Eldyr.`,
       });
     } catch (err) {
       console.error('Stake failed:', err);
@@ -90,7 +100,7 @@ export default function DashboardPage() {
         isOpen: true,
         type: 'success',
         title: 'Unstake Successful!',
-        message: `Successfully unstaked approximately ${amount.toFixed(2)} MAS from your Elydr.`,
+        message: `Successfully unstaked approximately ${amount.toFixed(2)} MAS from your Eldyr.`,
       });
     } catch (err) {
       console.error('Unstake failed:', err);
@@ -118,7 +128,7 @@ export default function DashboardPage() {
             isOpen: true,
             type: 'success',
             title: 'Pet Released',
-            message: 'Your Elydr has been released and all staked MAS has been returned.',
+            message: 'Your Eldyr has been released and all staked MAS has been returned.',
           });
         } catch (err) {
           console.error('Release failed:', err);
@@ -127,18 +137,18 @@ export default function DashboardPage() {
     });
   };
 
-  // Show loader while checking blockchain on first connect
-  if (wallet.isConnected && !currentPet && isLoadingPets) {
+  // Show loader while checking blockchain when wallet is connected
+  if (wallet.isConnected && isLoadingPets) {
     return (
       <div className="min-h-screen py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <div className="bg-cosmic-900/50 border border-cosmic-700/50 rounded-2xl p-12 backdrop-blur-sm">
-            <div className="w-24 h-24 mx-auto mb-6 bg-cosmic-800 rounded-2xl flex items-center justify-center animate-pulse">
-              <span className="text-5xl">🔍</span>
+            <div className="w-24 h-24 mx-auto mb-6 bg-cosmic-800 rounded-2xl flex items-center justify-center">
+              <div className="w-12 h-12 border-4 border-mythic-purple border-t-transparent rounded-full animate-spin" />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-4">Loading Your Elydrs...</h2>
+            <h2 className="text-2xl font-bold text-white mb-4">Fetching Your Eldyrs...</h2>
             <p className="text-cosmic-400 max-w-md mx-auto">
-              Checking blockchain for your pets...
+              Loading your pets from the blockchain...
             </p>
           </div>
         </div>
@@ -146,8 +156,33 @@ export default function DashboardPage() {
     );
   }
 
-  // Show empty state only after loading is complete
-  if (!wallet.isConnected || !currentPet) {
+  // Show connect wallet prompt if not connected
+  if (!wallet.isConnected) {
+    return (
+      <div className="min-h-screen py-12 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="bg-cosmic-900/50 border border-cosmic-700/50 rounded-2xl p-12 backdrop-blur-sm">
+            <div className="w-24 h-24 mx-auto mb-6 bg-cosmic-800 rounded-2xl flex items-center justify-center">
+              <span className="text-5xl">🔗</span>
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-4">Connect Your Wallet</h2>
+            <p className="text-cosmic-400 mb-8 max-w-md mx-auto">
+              Connect your wallet to view your Eldyrs dashboard.
+            </p>
+            <Link
+              href="/mint"
+              className="inline-block px-8 py-4 bg-gradient-to-r from-mythic-purple to-mythic-cyan text-white font-bold rounded-xl hover:opacity-90 transition-opacity"
+            >
+              Connect & Mint
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show empty state only after loading is complete and no pets found
+  if (!currentPet) {
     return (
       <div className="min-h-screen py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
@@ -155,17 +190,15 @@ export default function DashboardPage() {
             <div className="w-24 h-24 mx-auto mb-6 bg-cosmic-800 rounded-2xl flex items-center justify-center">
               <span className="text-5xl">🥚</span>
             </div>
-            <h2 className="text-2xl font-bold text-white mb-4">No Elydr Found</h2>
+            <h2 className="text-2xl font-bold text-white mb-4">No Eldyr Found</h2>
             <p className="text-cosmic-400 mb-8 max-w-md mx-auto">
-              {!wallet.isConnected
-                ? 'Connect your wallet and mint an Elydr to view your dashboard.'
-                : 'You haven\'t minted an Elydr yet. Start your journey by minting an egg!'}
+              You haven&apos;t minted an Eldyr yet. Start your journey by minting an egg!
             </p>
             <Link
               href="/mint"
               className="inline-block px-8 py-4 bg-gradient-to-r from-mythic-purple to-mythic-cyan text-white font-bold rounded-xl hover:opacity-90 transition-opacity"
             >
-              Mint Your Elydr
+              Mint Your Eldyr
             </Link>
           </div>
         </div>
@@ -179,12 +212,17 @@ export default function DashboardPage() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-            <p className="text-cosmic-400">Monitor your Elydr&apos;s growth and evolution</p>
+            <p className="text-cosmic-400">Monitor your Eldyr&apos;s growth and evolution</p>
           </div>
 
           <div className="flex flex-col gap-3">
             <div className="bg-cosmic-900/50 border border-cosmic-700/50 rounded-xl px-6 py-3 backdrop-blur-sm">
-              <CountdownTimer targetDate={currentPet.nextCheckAt} label="Next autonomous check" />
+              <CountdownTimer
+                targetDate={currentPet.nextCheckAt}
+                label="Next autonomous check"
+                onComplete={handleEvolutionComplete}
+                isRefreshing={isRefreshingEvolution}
+              />
             </div>
             <button
               onClick={simulateEvolution}
@@ -217,7 +255,7 @@ export default function DashboardPage() {
         {pets.length > 1 && (
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-cosmic-400 text-sm">Your Elydrs:</span>
+              <span className="text-cosmic-400 text-sm">Your Eldyrs:</span>
               <span className="text-mythic-cyan text-sm font-bold">{pets.length}</span>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2">
@@ -436,7 +474,7 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                <EvolutionLog events={currentPet.history} maxEvents={5} />
+                <EvolutionLog events={currentPet.history} initialLimit={5} />
               </div>
             )}
 
@@ -508,7 +546,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                <EvolutionLog events={currentPet.history} maxEvents={20} />
+                <EvolutionLog events={currentPet.history} initialLimit={10} />
               </div>
             )}
           </div>

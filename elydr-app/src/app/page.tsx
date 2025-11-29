@@ -6,7 +6,7 @@ import { ElydrStage } from '@/types';
 const evolutionStages: { stage: ElydrStage; emoji: string; label: string; description: string }[] = [
   { stage: 'egg', emoji: '🥚', label: 'Egg', description: 'Fresh from the mint' },
   { stage: 'hatchling', emoji: '🐣', label: 'Hatchling', description: 'First steps' },
-  { stage: 'young', emoji: '🐉', label: 'Young Elydr', description: 'Growing stronger' },
+  { stage: 'young', emoji: '🐉', label: 'Young Eldyr', description: 'Growing stronger' },
   { stage: 'mature', emoji: '🔥', label: 'Mature', description: 'Battle ready' },
   { stage: 'elder', emoji: '⚡', label: 'Elder Dragon', description: 'Legendary power' },
 ];
@@ -14,23 +14,23 @@ const evolutionStages: { stage: ElydrStage; emoji: string; label: string; descri
 const howItWorks = [
   {
     step: 1,
-    title: 'Mint Your Elydr Egg',
+    title: 'Mint Your Eldyr Egg',
     description:
-      'Connect your wallet and mint a unique Elydr egg NFT on the Massa blockchain. Each egg holds a mythical creature waiting to be born.',
+      'Connect your wallet and mint a unique Eldyr egg NFT on the Massa blockchain. Each egg holds a mythical creature waiting to be born.',
     icon: '🥚',
   },
   {
     step: 2,
     title: 'Link a Yield Source',
     description:
-      'Connect your Elydr to a DeFi yield source on Massa. The yield generated will fuel your pet\'s growth and evolution.',
+      'Connect your Eldyr to a DeFi yield source on Massa. The yield generated will fuel your pet\'s growth and evolution.',
     icon: '💰',
   },
   {
     step: 3,
     title: 'Watch It Evolve',
     description:
-      'Every 30 minutes, Massa\'s autonomous smart contracts check your yield and award growth points. High, consistent yield leads to mythic evolutions!',
+      'Every 3 minutes, Massa\'s autonomous smart contracts check your yield and award growth points. High, consistent yield leads to mythic evolutions!',
     icon: '✨',
   },
 ];
@@ -51,7 +51,7 @@ export default function HomePage() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-bold mb-6">
-            <span className="gradient-text">Elydr</span>
+            <span className="gradient-text">Eldyr</span>
           </h1>
 
           <p className="text-xl md:text-2xl text-cosmic-300 mb-8 max-w-2xl mx-auto">
@@ -59,7 +59,7 @@ export default function HomePage() {
           </p>
 
           <p className="text-cosmic-400 mb-10 max-w-xl mx-auto">
-            Mint an Elydr egg, link it to DeFi yield, and watch as Massa&apos;s autonomous smart
+            Mint an Eldyr egg, link it to DeFi yield, and watch as Massa&apos;s autonomous smart
             contracts evolve your pet into a legendary creature.
           </p>
 
@@ -81,7 +81,7 @@ export default function HomePage() {
           <div className="mt-16 grid grid-cols-3 gap-8 max-w-md mx-auto">
             <div>
               <div className="text-3xl font-bold text-white">1,234</div>
-              <div className="text-cosmic-400 text-sm">Elydrs Minted</div>
+              <div className="text-cosmic-400 text-sm">Eldyrs Minted</div>
             </div>
             <div>
               <div className="text-3xl font-bold text-mythic-cyan">$2.4M</div>
@@ -116,7 +116,7 @@ export default function HomePage() {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">How It Works</h2>
             <p className="text-cosmic-400 max-w-2xl mx-auto">
-              Elydr leverages Massa&apos;s unique autonomous smart contracts to create truly
+              Eldyr leverages Massa&apos;s unique autonomous smart contracts to create truly
               decentralized, self-evolving NFT pets.
             </p>
           </div>
@@ -155,7 +155,7 @@ export default function HomePage() {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Evolution Stages</h2>
             <p className="text-cosmic-400 max-w-2xl mx-auto">
-              Your Elydr evolves through five stages. High yield leads to the mythic path —
+              Your Eldyr evolves through five stages. High yield leads to the mythic path —
               low yield takes the common path. Both are valid journeys!
             </p>
           </div>
@@ -203,7 +203,7 @@ export default function HomePage() {
               </div>
               <p className="text-cosmic-300">
                 Consistent high yield (8%+ APY average) unlocks the mythic evolution path.
-                Your Elydr becomes a legendary dragon with enhanced battle stats.
+                Your Eldyr becomes a legendary dragon with enhanced battle stats.
               </p>
             </div>
 
@@ -226,16 +226,16 @@ export default function HomePage() {
       <section className="py-24 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Ready to Hatch Your Elydr?
+            Ready to Hatch Your Eldyr?
           </h2>
           <p className="text-cosmic-400 mb-8 max-w-xl mx-auto">
-            Join the Elydr ecosystem and experience the first truly autonomous NFT pets on Massa.
+            Join the Eldyr ecosystem and experience the first truly autonomous NFT pets on Massa.
           </p>
           <Link
             href="/mint"
             className="inline-block px-10 py-4 bg-gradient-to-r from-mythic-purple to-mythic-cyan text-white font-bold rounded-xl hover:opacity-90 transition-opacity btn-glow text-lg"
           >
-            Mint Your Elydr
+            Mint Your Eldyr
           </Link>
         </div>
       </section>

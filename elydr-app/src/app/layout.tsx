@@ -7,7 +7,7 @@ import { ElydrProvider } from '@/context/ElydrContext';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Elydr - Autonomous Mythical Pets on Massa',
+  title: 'Eldyr - Autonomous Mythical Pets on Massa',
   description:
     'Mint, grow, and battle mythical pets powered by DeFi yield and Massa autonomous smart contracts.',
   keywords: ['Massa', 'NFT', 'DeFi', 'Autonomous', 'Web3', 'Blockchain', 'Pets'],
