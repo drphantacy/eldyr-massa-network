@@ -42,14 +42,12 @@ export default function MintPage() {
 
   const justMintedPet = justMintedPetId ? pets.find(p => p.id === justMintedPetId) : null;
 
-  // Determine which pet to show in link/complete steps
   const activePet = justMintedPet || (currentPet && !currentPet.linkedYieldSourceId ? currentPet : null);
 
   useEffect(() => {
     if (!wallet.isConnected) {
       setStep('connect');
     } else if (justMintedPetId) {
-      // User just minted in this session
       if (justMintedPet && !justMintedPet.linkedYieldSourceId) {
         setStep('link');
       } else if (justMintedPet && justMintedPet.linkedYieldSourceId) {
@@ -58,10 +56,8 @@ export default function MintPage() {
         setStep('mint');
       }
     } else if (currentPet && !currentPet.linkedYieldSourceId) {
-      // Has an existing pet without linked yield source
       setStep('link');
     } else {
-      // All pets linked or no pets - show mint
       setStep('mint');
     }
   }, [wallet.isConnected, justMintedPetId, justMintedPet, currentPet]);
@@ -263,7 +259,7 @@ export default function MintPage() {
               </div>
               <h2 className="text-2xl font-bold text-white mb-2">Your Eldyr is Ready!</h2>
               <p className="text-cosmic-400 mb-8 max-w-md mx-auto">
-                Your Eldyr egg is now linked to a yield source. The autonomous contracts will check every 3 minutes to award growth points.
+                Your Eldyr egg is now linked to a yield source. The autonomous contracts will check every hour to award growth points.
               </p>
 
               <div className="max-w-sm mx-auto mb-8">
@@ -312,7 +308,7 @@ export default function MintPage() {
             <li>• Connect your Massa wallet (MassaStation, Bearby, or MetaMask Snap)</li>
             <li>• Mint an Eldyr egg NFT on the Massa blockchain</li>
             <li>• Link a DeFi yield source to fuel your pet&apos;s evolution</li>
-            <li>• Autonomous smart contracts check yield every 3 minutes</li>
+            <li>• Autonomous smart contracts check yield every hour</li>
           </ul>
 
           <div className="mt-4 pt-4 border-t border-cosmic-700/30">

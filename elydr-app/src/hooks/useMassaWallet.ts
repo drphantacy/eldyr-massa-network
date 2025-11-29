@@ -44,7 +44,6 @@ export function useMassaWallet(): UseMassaWalletReturn {
   const [availableWallets, setAvailableWallets] = useState<Wallet[]>([]);
   const autoConnectAttempted = useRef(false);
 
-  // Detect wallets
   useEffect(() => {
     const detectWallets = async () => {
       try {
@@ -102,7 +101,6 @@ export function useMassaWallet(): UseMassaWalletReturn {
       let balance = '0';
       try {
         const balanceInfo = await account.balance();
-        // Handle different balance formats from different wallets
         let rawBalance: bigint;
         if (typeof balanceInfo === 'bigint') {
           rawBalance = balanceInfo;
@@ -136,7 +134,6 @@ export function useMassaWallet(): UseMassaWalletReturn {
         error: null,
       });
 
-      // Save connection state
       if (typeof window !== 'undefined') {
         localStorage.setItem(WALLET_CONNECTED_KEY, 'true');
       }
@@ -172,9 +169,7 @@ export function useMassaWallet(): UseMassaWalletReturn {
             }
           });
         }
-      } catch {
-        // Some wallets don't support account change listening
-      }
+      } catch {}
 
     } catch (err) {
       console.error('Error connecting wallet:', err);
@@ -195,7 +190,6 @@ export function useMassaWallet(): UseMassaWalletReturn {
       console.error('Error disconnecting:', err);
     }
 
-    // Clear connection state
     if (typeof window !== 'undefined') {
       localStorage.removeItem(WALLET_CONNECTED_KEY);
     }
@@ -203,7 +197,6 @@ export function useMassaWallet(): UseMassaWalletReturn {
     setState(initialState);
   }, [state.wallet]);
 
-  // Auto-connect if previously connected
   useEffect(() => {
     if (autoConnectAttempted.current) return;
     if (availableWallets.length === 0) return;

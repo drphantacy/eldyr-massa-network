@@ -189,7 +189,7 @@ export function onChainPetToElydrPet(pet: OnChainPet): {
     level: pet.level,
     growthPoints: Number(pet.growthPoints),
     totalGrowthPoints: Number(pet.totalGrowthPoints),
-    nextCheckAt: new Date(Number(pet.lastCheckTime) + 180000), // 3 minutes for testing
+    nextCheckAt: new Date(Number(pet.lastCheckTime) + 3600000),
     linkedYieldSourceId: pet.linkedYieldSourceId || null,
     mintedAt: new Date(Number(pet.mintedAt)),
     history: [],

@@ -110,7 +110,7 @@ export const createMockPet = (id: string = '1234'): ElydrPet => ({
   level: 2,
   growthPoints: 17,
   totalGrowthPoints: 17,
-  nextCheckAt: new Date(Date.now() + 180000),
+  nextCheckAt: new Date(Date.now() + 3600000),
   linkedYieldSourceId: 'yield-1',
   mintedAt: new Date(Date.now() - 3600000 * 4),
   history: mockEvolutionHistory,

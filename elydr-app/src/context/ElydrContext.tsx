@@ -163,9 +163,7 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
 
             loadedPets.push(convertedPet);
           }
-        } catch (e) {
-          // Silently skip pets that don't exist or can't be loaded
-        }
+        } catch (e) {}
       }
 
       if (loadedPets.length > 0) {
@@ -207,7 +205,6 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
   const refreshPetsFromChain = useCallback(async () => {
     if (!massaWallet.account) return;
 
-    // Don't show loading spinner for background refresh - just update silently
     try {
       const totalSupply = await getTotalSupply(massaWallet.account);
       const loadedPets: ElydrPet[] = [];
@@ -219,10 +216,8 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
           if (onChainPet.owner === massaWallet.address) {
             const convertedPet = onChainPetToElydrPet(onChainPet) as ElydrPet;
 
-            // If nextCheckAt is in the past, set it to 3 min from now
-            // This resets the timer after refresh
             if (convertedPet.nextCheckAt.getTime() < now) {
-              convertedPet.nextCheckAt = new Date(now + 180000);
+              convertedPet.nextCheckAt = new Date(now + 3600000);
             }
 
             const evolutionHistory = await getEvolutionHistory(massaWallet.account, i);
@@ -239,27 +234,21 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
 
             loadedPets.push(convertedPet);
           }
-        } catch (e) {
-          // Silently skip pets that don't exist or can't be loaded
-        }
+        } catch (e) {}
       }
 
-      // Only update state if we got pets - don't clear existing pets on empty result
       if (loadedPets.length > 0) {
         setPets(loadedPets);
-        // Keep current selection if still valid, otherwise select first pet
         setSelectedPetId(prev => {
           const stillExists = loadedPets.some(p => p.id === prev);
           return stillExists ? prev : loadedPets[0].id;
         });
-        // Update localStorage
         if (typeof window !== 'undefined') {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(loadedPets));
         }
       }
     } catch (err) {
       console.error('Failed to refresh pets from chain:', err);
-      // Keep existing pets on error - don't clear
     }
   }, [massaWallet.account, massaWallet.address]);
 
@@ -276,7 +265,6 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
     setError(null);
 
     try {
-      // Get current total supply to know what the next pet ID will be
       const currentSupply = await getTotalSupply(massaWallet.account);
       const expectedPetId = (currentSupply + 1).toString();
 
@@ -286,7 +274,6 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
       setPets(prev => [...prev, tempPet]);
       setSelectedPetId(expectedPetId);
 
-      // Poll until pet is confirmed on chain
       const maxAttempts = 10;
       const pollInterval = 2000;
       let confirmed = false;
@@ -337,7 +324,7 @@ export function ElydrProvider({ children }: { children: React.ReactNode }) {
 
       setPets(prev => prev.map(pet =>
         pet.id === currentPet.id
-          ? { ...pet, linkedYieldSourceId: sourceId, nextCheckAt: new Date(Date.now() + 180000) }
+          ? { ...pet, linkedYieldSourceId: sourceId, nextCheckAt: new Date(Date.now() + 3600000) }
           : pet
       ));
     } catch (err) {

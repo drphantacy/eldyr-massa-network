@@ -137,7 +137,6 @@ export default function DashboardPage() {
     });
   };
 
-  // Show loader while checking blockchain when wallet is connected
   if (wallet.isConnected && isLoadingPets) {
     return (
       <div className="min-h-screen py-12 px-4">
@@ -156,7 +155,6 @@ export default function DashboardPage() {
     );
   }
 
-  // Show connect wallet prompt if not connected
   if (!wallet.isConnected) {
     return (
       <div className="min-h-screen py-12 px-4">
@@ -181,7 +179,6 @@ export default function DashboardPage() {
     );
   }
 
-  // Show empty state only after loading is complete and no pets found
   if (!currentPet) {
     return (
       <div className="min-h-screen py-12 px-4">

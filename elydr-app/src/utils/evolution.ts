@@ -9,7 +9,7 @@ import {
 } from '@/types';
 
 const STAGES: ElydrStage[] = ['egg', 'hatchling', 'young', 'mature', 'elder'];
-const EVOLUTION_INTERVAL = 180000; // 3 minutes for testing
+const EVOLUTION_INTERVAL = 3600000;
 
 export function getNextStage(current: ElydrStage, points: number): ElydrStage {
   const currentIndex = STAGES.indexOf(current);

@@ -30,7 +30,7 @@ const howItWorks = [
     step: 3,
     title: 'Watch It Evolve',
     description:
-      'Every 3 minutes, Massa\'s autonomous smart contracts check your yield and award growth points. High, consistent yield leads to mythic evolutions!',
+      'Every hour, Massa\'s autonomous smart contracts check your yield and award growth points. High, consistent yield leads to mythic evolutions!',
     icon: '✨',
   },
 ];

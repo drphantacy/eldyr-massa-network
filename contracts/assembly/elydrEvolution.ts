@@ -278,7 +278,7 @@ export function autonomousEvolutionCheck(_: StaticArray<u8>): void {
 
 function scheduleNextCheck(): void {
   const currentPeriod = Context.currentPeriod();
-  const periodsToWait: u64 = 11; // ~3 minutes (11 periods * ~16s per period)
+  const periodsToWait: u64 = 225; // ~1 hour (225 periods * ~16s per period)
   const nextPeriod = currentPeriod + periodsToWait;
   const selfAddress = Context.callee().toString();
 

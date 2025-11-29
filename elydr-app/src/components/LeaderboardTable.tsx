@@ -99,7 +99,7 @@ export function LeaderboardTable({ entries }: LeaderboardTableProps) {
 
       <div className="px-4 py-3 bg-cosmic-800/30 border-t border-cosmic-700/50">
         <p className="text-cosmic-500 text-xs text-center">
-          Leaderboard updates every 3 minutes based on autonomous contract execution
+          Leaderboard updates every hour based on autonomous contract execution
         </p>
       </div>
     </div>
